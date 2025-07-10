@@ -1,12 +1,12 @@
-import { Stack } from "expo-router";
 import "../global.css";
-
+import { Stack } from "expo-router";
+import LoadingLayout from "@/components/LoadingLayout";
 import { AuthProvider } from "@/context/auth";
 
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <Stack screenOptions={{ headerShown: false }}/>
+        <Stack screenOptions={{ headerShown: false }}/>
     </AuthProvider>
   );
 }
