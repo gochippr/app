@@ -7,11 +7,11 @@ import {
   makeRedirectUri,
   useAuthRequest
 } from "expo-auth-session";
+import { useRouter } from 'expo-router';
 import * as WebBrowser from "expo-web-browser";
 import * as jose from "jose";
 import * as React from "react";
 import { Platform } from "react-native";
-import { useRouter } from 'expo-router';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -30,8 +30,8 @@ export type AuthUser = {
 
 const AuthContext = React.createContext({
   user: null as AuthUser | null,
-  signIn: () => {},
-  signOut: () => {},
+  signIn: async () => {},
+  signOut: async () => {},
   fetchWithAuth: (url: string, options: RequestInit) =>
     Promise.resolve(new Response()),
   isLoading: false,
