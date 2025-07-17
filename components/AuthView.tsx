@@ -1,6 +1,5 @@
 import { useAuth } from '@/context/auth';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -20,31 +19,29 @@ const AuthScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState<string | null>(null);
 
   // Animations
-  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
 
   useEffect(() => {
-    // Pulse animation for the logo
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  }, [pulseAnim]);
+    // Fade in animation
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [fadeAnim, slideAnim]);
 
   const handleGoogleAuth = async () => {
     setIsLoading('google');
     try {
       await signIn();
-      // Navigation will be handled by the auth context/state changes
     } catch (error) {
       console.error('Google auth error:', error);
       Alert.alert('Error', 'Failed to sign in with Google. Please try again.');
@@ -56,7 +53,6 @@ const AuthScreen: React.FC = () => {
   const handleAppleAuth = async () => {
     setIsLoading('apple');
     try {
-      // TODO: Implement Apple Sign In
       Alert.alert('Coming Soon', 'Apple Sign In will be available soon!');
     } catch (error) {
       console.error('Apple auth error:', error);
@@ -67,70 +63,85 @@ const AuthScreen: React.FC = () => {
   };
 
   return (
-    <LinearGradient colors={['#1E1B4B', '#312E81', '#1E1B4B']} style={styles.container}>
+    <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardView}
         >
-          <View style={styles.content}>
+          <Animated.View 
+            style={[
+              styles.content,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }],
+              },
+            ]}
+          >
             {/* Logo Section */}
-            <Animated.View style={[styles.logoContainer, { transform: [{ scale: pulseAnim }] }]}>
-              <LinearGradient
-                colors={['#6366F1', '#8B5CF6', '#EC4899']}
-                style={styles.logoGradient}
+            <View style={styles.logoContainer}>
+              <View style={styles.logoCircle}>
+                <Text style={styles.logoText}>B</Text>
+              </View>
+              <Text style={styles.appName}>BudgetBuddy</Text>
+              <Text style={styles.tagline}>Your Gen Z finance companion</Text>
+              <Text style={styles.subTagline}>Track, split, and save like a pro 💪</Text>
+            </View>
+
+            {/* Auth Card */}
+            <View style={styles.authCard}>
+              <View style={styles.cardHeader}>
+                <Text style={styles.welcomeTitle}>Welcome back!</Text>
+                <Text style={styles.welcomeSubtitle}>Sign in to continue your money journey</Text>
+              </View>
+
+              {/* Google Sign In */}
+              <TouchableOpacity 
+                style={[styles.authButton, styles.googleButton]}
+                onPress={handleGoogleAuth}
+                disabled={isLoading !== null || authLoading}
+                activeOpacity={0.8}
               >
-                <Ionicons name="wallet" size={40} color="white" />
-              </LinearGradient>
-              <Text style={styles.logoText}>GoChippr</Text>
-              <Text style={styles.tagline}>Split expenses effortlessly</Text>
-            </Animated.View>
-
-            {/* Form Section */}
-            <View style={styles.formContainer}>
-              <Text style={styles.title}>Welcome to GoChippr</Text>
-              <Text style={styles.subtitle}>
-                Sign in to start splitting expenses with friends
-              </Text>
-
-              {/* Social Login */}
-              <View style={styles.dividerContainer}>
-                <View style={styles.divider} />
-                <Text style={styles.dividerText}>continue with</Text>
-                <View style={styles.divider} />
-              </View>
-
-              <View style={styles.socialContainer}>
-                <TouchableOpacity 
-                  style={[styles.socialButton, styles.googleButton]}
-                  onPress={handleGoogleAuth}
-                  disabled={isLoading !== null || authLoading}
-                >
-                  {(isLoading === 'google' || authLoading) ? (
-                    <ActivityIndicator color="#DB4437" />
-                  ) : (
-                    <>
+                {(isLoading === 'google' || authLoading) ? (
+                  <View style={styles.buttonContent}>
+                    <ActivityIndicator color="#203627" />
+                    <Text style={styles.loadingText}>Signing in...</Text>
+                  </View>
+                ) : (
+                  <View style={styles.buttonContent}>
+                    <View style={styles.googleIcon}>
                       <Ionicons name="logo-google" size={24} color="#DB4437" />
-                      <Text style={styles.socialButtonText}>Continue with Google</Text>
-                    </>
-                  )}
-                </TouchableOpacity>
+                    </View>
+                    <View style={styles.buttonTextContainer}>
+                      <Text style={styles.buttonText}>Continue with Google</Text>
+                      <Text style={styles.buttonSubtext}>(Demo: Sarah&apos;s Account)</Text>
+                    </View>
+                  </View>
+                )}
+              </TouchableOpacity>
 
-                <TouchableOpacity 
-                  style={[styles.socialButton, styles.appleButton]}
-                  onPress={handleAppleAuth}
-                  disabled={isLoading !== null || authLoading}
-                >
-                  {isLoading === 'apple' ? (
-                    <ActivityIndicator color="white" />
-                  ) : (
-                    <>
-                      <Ionicons name="logo-apple" size={24} color="white" />
-                      <Text style={[styles.socialButtonText, styles.appleButtonText]}>Continue with Apple</Text>
-                    </>
-                  )}
-                </TouchableOpacity>
-              </View>
+              {/* Apple Sign In */}
+              <TouchableOpacity 
+                style={[styles.authButton, styles.appleButton]}
+                onPress={handleAppleAuth}
+                disabled={isLoading !== null || authLoading}
+                activeOpacity={0.8}
+              >
+                {isLoading === 'apple' ? (
+                  <View style={styles.buttonContent}>
+                    <ActivityIndicator color="#EFEFEF" />
+                    <Text style={[styles.loadingText, styles.appleLoadingText]}>Signing in...</Text>
+                  </View>
+                ) : (
+                  <View style={styles.buttonContent}>
+                    <Ionicons name="logo-apple" size={24} color="#EFEFEF" />
+                    <View style={styles.buttonTextContainer}>
+                      <Text style={[styles.buttonText, styles.appleButtonText]}>Continue with Apple</Text>
+                      <Text style={[styles.buttonSubtext, styles.appleButtonSubtext]}>(Demo: New User)</Text>
+                    </View>
+                  </View>
+                )}
+              </TouchableOpacity>
 
               {/* Terms */}
               <View style={styles.termsContainer}>
@@ -143,31 +154,38 @@ const AuthScreen: React.FC = () => {
               </View>
             </View>
 
-            {/* Features */}
+            {/* Features Preview */}
             <View style={styles.featuresContainer}>
               <View style={styles.featureItem}>
-                <Ionicons name="people" size={20} color="#8B5CF6" />
-                <Text style={styles.featureText}>Split expenses</Text>
+                <View style={[styles.featureIcon, styles.featureIcon1]}>
+                  <Text style={styles.featureEmoji}>📊</Text>
+                </View>
+                <Text style={styles.featureText}>Smart Insights</Text>
               </View>
               <View style={styles.featureItem}>
-                <Ionicons name="calculator" size={20} color="#8B5CF6" />
-                <Text style={styles.featureText}>Track debts</Text>
+                <View style={[styles.featureIcon, styles.featureIcon2]}>
+                  <Text style={styles.featureEmoji}>👥</Text>
+                </View>
+                <Text style={styles.featureText}>Split Bills</Text>
               </View>
               <View style={styles.featureItem}>
-                <Ionicons name="shield-checkmark" size={20} color="#8B5CF6" />
-                <Text style={styles.featureText}>Bank-level security</Text>
+                <View style={[styles.featureIcon, styles.featureIcon3]}>
+                  <Text style={styles.featureEmoji}>🎯</Text>
+                </View>
+                <Text style={styles.featureText}>Reach Goals</Text>
               </View>
             </View>
-          </View>
+          </Animated.View>
         </KeyboardAvoidingView>
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#EFEFEF',
   },
   safeArea: {
     flex: 1,
@@ -183,113 +201,178 @@ const styles = StyleSheet.create({
   logoContainer: {
     alignItems: 'center',
     marginBottom: 40,
+    paddingTop: 20,
   },
-  logoGradient: {
-    width: 80,
-    height: 80,
-    borderRadius: 20,
+  logoCircle: {
+    width: 96,
+    height: 96,
+    backgroundColor: '#E8FF40',
+    borderRadius: 48,
     justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  logoText: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: 'white',
-    marginBottom: 4,
-  },
-  tagline: {
-    fontSize: 16,
-    color: '#94A3B8',
-  },
-  formContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 20,
-    padding: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: 'white',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#94A3B8',
-    marginBottom: 32,
-    textAlign: 'center',
-  },
-  dividerContainer: {
-    flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 24,
+    shadowColor: '#203627',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  divider: {
-    flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  logoText: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    color: '#203627',
   },
-  dividerText: {
-    color: '#64748B',
-    fontSize: 12,
-    marginHorizontal: 16,
+  appName: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#203627',
+    marginBottom: 8,
   },
-  socialContainer: {
-    gap: 16,
+  tagline: {
+    fontSize: 18,
+    color: '#203627',
+    opacity: 0.8,
+  },
+  subTagline: {
+    fontSize: 14,
+    color: '#203627',
+    opacity: 0.6,
+    marginTop: 4,
+  },
+  authCard: {
+    backgroundColor: 'white',
+    borderRadius: 24,
+    padding: 24,
+    shadowColor: '#203627',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 8,
+    marginHorizontal: 8,
+  },
+  cardHeader: {
+    alignItems: 'center',
     marginBottom: 32,
   },
-  socialButton: {
+  welcomeTitle: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#203627',
+    marginBottom: 8,
+  },
+  welcomeSubtitle: {
+    fontSize: 16,
+    color: '#203627',
+    opacity: 0.7,
+    textAlign: 'center',
+  },
+  authButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    gap: 12,
+    height: 56,
+    borderRadius: 14,
+    marginBottom: 16,
+    shadowColor: '#203627',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 3,
   },
   googleButton: {
     backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#9DC4D5',
   },
   appleButton: {
-    backgroundColor: 'black',
+    backgroundColor: '#203627',
   },
-  socialButtonText: {
-    fontSize: 17,
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  googleIcon: {
+    marginRight: 12,
+  },
+  buttonTextContainer: {
+    alignItems: 'flex-start',
+  },
+  buttonText: {
+    fontSize: 16,
     fontWeight: '600',
-    color: '#3C4043',
+    color: '#203627',
+  },
+  buttonSubtext: {
+    fontSize: 12,
+    color: '#203627',
+    opacity: 0.6,
+    marginTop: 2,
   },
   appleButtonText: {
-    color: 'white',
+    color: '#EFEFEF',
+  },
+  appleButtonSubtext: {
+    color: '#EFEFEF',
+    opacity: 0.8,
+  },
+  loadingText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#203627',
+    marginLeft: 12,
+  },
+  appleLoadingText: {
+    color: '#EFEFEF',
   },
   termsContainer: {
-    paddingTop: 8,
+    marginTop: 24,
+    paddingTop: 16,
   },
   termsText: {
     textAlign: 'center',
     fontSize: 12,
-    color: '#64748B',
+    color: '#203627',
+    opacity: 0.6,
     lineHeight: 18,
   },
   termsLink: {
-    color: '#8B5CF6',
-    fontWeight: '500',
+    color: '#9DC4D5',
+    fontWeight: '600',
   },
   featuresContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginTop: 60,
-    paddingHorizontal: 20,
+    marginTop: 48,
+    paddingHorizontal: 12,
   },
   featureItem: {
     alignItems: 'center',
-    gap: 8,
+  },
+  featureIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  featureIcon1: {
+    backgroundColor: '#9DC4D5',
+  },
+  featureIcon2: {
+    backgroundColor: '#E8FF40',
+  },
+  featureIcon3: {
+    backgroundColor: '#203627',
+  },
+  featureEmoji: {
+    fontSize: 24,
   },
   featureText: {
-    color: '#94A3B8',
-    fontSize: 13,
+    fontSize: 12,
+    color: '#203627',
+    opacity: 0.8,
   },
 });
 
