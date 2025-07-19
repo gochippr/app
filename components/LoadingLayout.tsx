@@ -11,12 +11,12 @@ interface LoadingLayoutProps {
 const LoadingLayout: React.FC<LoadingLayoutProps> = ({
   isLoading,
   children,
-  spinnerColor = '#007AFF',
+  spinnerColor = '#203627',
   spinnerSize = 'large',
 }) => {
   if (isLoading) {
     return (
-      <View className="flex-1 justify-center items-center bg-white">
+      <View className="flex-1 justify-center items-center" style={{ backgroundColor: '#EFEFEF' }}>
         <ActivityIndicator size={spinnerSize} color={spinnerColor} />
       </View>
     );
