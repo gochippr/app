@@ -1,4 +1,4 @@
-import PlaidManager from '@/components/PlaidManager';
+import PlaidConnectCard from '@/components/PlaidConnectCard';
 import { useAuth } from '@/context/auth';
 import MockProtectedApi from '@/services/mockProtectedApi';
 import { Ionicons } from '@expo/vector-icons';
@@ -61,7 +61,7 @@ export default function HomePage() {
 
           {/* Plaid Integration */}
           <View style={styles.plaidSection}>
-            <PlaidManager fetchWithAuth={fetchWithAuth} user={user} />
+            <PlaidConnectCard />
           </View>
 
           {/* Recent Activity */}
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   contentContainer: {
-    paddingBottom: 20, // Reduced padding since tab bar handles the space
+    paddingBottom: 20,
   },
   statsContainer: {
     flexDirection: 'row',
