@@ -7,7 +7,7 @@ import {
   makeRedirectUri,
   useAuthRequest
 } from "expo-auth-session";
-import { useRouter } from 'expo-router';
+// Remove the router import - we'll handle navigation differently
 import * as WebBrowser from "expo-web-browser";
 import * as jose from "jose";
 import * as React from "react";
@@ -25,7 +25,7 @@ export type AuthUser = {
   email_verified?: boolean;
   provider?: string;
   exp?: number;
-  cookieExpiration?: number; // Added for web cookie expiration tracking
+  cookieExpiration?: number;
 };
 
 const AuthContext = React.createContext({
@@ -57,7 +57,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<AuthError | null>(null);
-  const router = useRouter();
+  // Remove router from here - navigation will be handled by the root layout
   const isWeb = Platform.OS === "web";
   const refreshInProgressRef = React.useRef(false);
 
@@ -72,10 +72,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         if (isWeb) {
           // For web: Check if we have a session cookie by making a request to a session endpoint
-  
-          
-
-          
           const sessionResponse = await fetch(`${BACKEND_URL}/auth/session`, {
             method: "GET",
             credentials: "include", // Important: This includes cookies in the request
@@ -98,8 +94,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           // For native: Try to use the stored access token first
           const storedAccessToken = await tokenCache?.getToken("accessToken");
           const storedRefreshToken = await tokenCache?.getToken("refreshToken");
-
-
 
           if (storedAccessToken) {
             try {
@@ -370,7 +364,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             credentials: "include",
           });
         } else {
-          router.replace('/login');
+          // Don't navigate here - let the root layout handle it
           return response; // Return the original response
         }
       }
