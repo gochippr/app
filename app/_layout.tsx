@@ -1,5 +1,4 @@
 import { AuthProvider, useAuth } from "@/context/auth";
-import { PlaidProvider } from "@/context/plaid";
 import { Stack } from "expo-router";
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from "react";
@@ -40,17 +39,7 @@ function AuthInitializer() {
     );
   }
   
-  // Once auth is ready, render PlaidProvider and the navigator
-  return (
-    <PlaidProvider>
-      <RootNavigator />
-    </PlaidProvider>
-  );
-}
-
-function RootNavigator() {
-  const { user } = useAuth();
-  
+  // Once auth is ready, render the navigator
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(auth)" />

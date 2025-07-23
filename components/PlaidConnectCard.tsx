@@ -3,25 +3,6 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
-// Mock usePlaid hook for testing - bypassing plaid.tsx
-// const usePlaid = () => {
-//   return {
-//     hasConnectedAccounts: false, // Change this to test different scenarios: true, false, null
-//     isLoading: false, // Change to true to test loading state
-//     error: null, // Change to "Test error message" to test error state
-//     checkConnectedAccounts: async () => {
-//       console.log('Mock: checkConnectedAccounts called');
-//       // Mock implementation - does nothing
-//     },
-//     setHasConnectedAccounts: (value: boolean) => {
-//       console.log('Mock: setHasConnectedAccounts called with:', value);
-//     },
-//     clearError: () => {
-//       console.log('Mock: clearError called');
-//     },
-//   };
-// };
-
 export default function PlaidConnectCard() {
   const router = useRouter();
   const { hasConnectedAccounts, checkConnectedAccounts, error, plaidLoading } = usePlaid();
@@ -126,25 +107,3 @@ export default function PlaidConnectCard() {
     </View>
   );
 }
-
-// In PlaidConnectCard.tsx
-// export default function PlaidConnectCard() {
-//     console.log('PlaidConnectCard rendering');
-    
-//     try {
-//       const router = useRouter();
-//       console.log('Router initialized');
-//     } catch (e) {
-//       console.error('Router error:', e);
-//     }
-    
-//     try {
-//       const context = usePlaid();
-//       console.log('Plaid context:', context);
-//       console.log('isLoading type:', typeof context.plaidLoading);
-//     } catch (e) {
-//       console.error('Plaid context error:', e);
-//     }
-    
-//     return <View><Text>Debug</Text></View>;
-//   }
