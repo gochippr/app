@@ -163,7 +163,7 @@ export default function PlaidLinkComponent({
           </View>
         </View>
 
-        {/* PlaidLink component without custom UI inside */}
+        {/* PlaidLink component - touch events handled directly by PlaidLink */}
         <PlaidLink
           tokenConfig={{
             token: linkToken,
@@ -172,11 +172,18 @@ export default function PlaidLinkComponent({
           onSuccess={handleSuccess}
           onExit={handleExit}
         >
-          <Pressable style={{ backgroundColor: '#203627', paddingVertical: 14, paddingHorizontal: 32, borderRadius: 12 }}>
+          <View style={{ 
+            backgroundColor: '#203627', 
+            paddingVertical: 14, 
+            paddingHorizontal: 32, 
+            borderRadius: 12,
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
             <Text style={{ color: '#EFEFEF', fontWeight: '600', textAlign: 'center', fontSize: 16 }}>
               Continue to Bank Selection
             </Text>
-          </Pressable>
+          </View>
         </PlaidLink>
       </View>
     </View>
