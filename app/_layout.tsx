@@ -10,61 +10,49 @@ import "../global.css";
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const [isReady, setIsReady] = useState(false);
-
-  useEffect(() => {
-    // Prepare the app
-    async function prepare() {
-      try {
-        // Add any pre-loading tasks here
-        // Artificial delay to ensure everything is mounted
-        await new Promise(resolve => setTimeout(resolve, 100));
-      } catch (e) {
-        console.warn(e);
-      } finally {
-        setIsReady(true);
-        await SplashScreen.hideAsync();
-      }
-    }
-
-    prepare();
-  }, []);
-
-  if (!isReady) {
-    return null;
-  }
-
   return (
     <AuthProvider>
-      <PlaidProvider>
-        <RootNavigator />
-      </PlaidProvider>
+      <AuthInitializer />
     </AuthProvider>
   );
 }
 
-function RootNavigator() {
-  const { user, isLoading } = useAuth();
-  const [navigationReady, setNavigationReady] = useState(false);
-
+// This component waits for auth to initialize before rendering children
+function AuthInitializer() {
+  const [isAuthReady, setIsAuthReady] = useState(false);
+  const { isLoading: authLoading, user } = useAuth();
+  
   useEffect(() => {
-    // Ensure navigation is ready before rendering
-    setNavigationReady(true);
-  }, []);
-
-  if (isLoading || !navigationReady) {
+    // Wait for auth to finish its initial loading
+    if (!authLoading) {
+      setIsAuthReady(true);
+      // Hide splash screen once auth is ready
+      SplashScreen.hideAsync();
+    }
+  }, [authLoading]);
+  
+  // Show loading while auth is initializing
+  if (!isAuthReady) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#EFEFEF' }}>
         <ActivityIndicator size="large" color="#203627" />
       </View>
     );
   }
-
+  
+  // Once auth is ready, render PlaidProvider and the navigator
   return (
-    <Stack 
-      screenOptions={{ headerShown: false }}
-      initialRouteName={user ? "(tabs)" : "(auth)/login"}
-    >
+    <PlaidProvider>
+      <RootNavigator />
+    </PlaidProvider>
+  );
+}
+
+function RootNavigator() {
+  const { user } = useAuth();
+  
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(auth)" />
       <Stack.Screen name="(tabs)" />
     </Stack>
