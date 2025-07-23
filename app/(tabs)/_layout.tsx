@@ -1,11 +1,19 @@
 import { PlaidProvider } from '@/context/plaid';
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 
 export default function TabLayout() {
+  const [tabsMounted, setTabsMounted] = useState(false);
+
+  // Signal when tabs have mounted
+  useEffect(() => {
+    setTabsMounted(true);
+  }, []);
+
   return (
-    <PlaidProvider>
+    <PlaidProvider tabsMounted={tabsMounted}>
       <Tabs
         screenOptions={{
           headerShown: false,

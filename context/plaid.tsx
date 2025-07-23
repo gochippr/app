@@ -13,23 +13,28 @@ interface PlaidContextType {
 
 const PlaidContext = createContext<PlaidContextType | undefined>(undefined);
 
-export function PlaidProvider({ children }: { children: React.ReactNode }) {
+interface PlaidProviderProps {
+  children: React.ReactNode;
+  tabsMounted?: boolean;
+}
+
+export function PlaidProvider({ children, tabsMounted = false }: PlaidProviderProps) {
   const [hasConnectedAccounts, setHasConnectedAccounts] = useState<boolean | null>(null);
   const [plaidLoading, setPlaidLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasInitialized, setHasInitialized] = useState(false);
   const { user, fetchWithAuth, isLoading: authLoading } = useAuth();
 
-  // Simplified plaidService creation - only depend on essential auth state
+  // Create plaidService only when both auth is ready and tabs are mounted
   const plaidService = useMemo(() => {
-    if (!fetchWithAuth || authLoading) return null;
+    if (!fetchWithAuth || authLoading || !tabsMounted) return null;
     try {
       return new PlaidService(fetchWithAuth);
     } catch (err) {
       console.error('Error creating PlaidService:', err);
       return null;
     }
-  }, [fetchWithAuth, authLoading]);
+  }, [fetchWithAuth, authLoading, tabsMounted]);
 
   const checkConnectedAccounts = async () => {
     if (!plaidService) {
@@ -62,26 +67,23 @@ export function PlaidProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Safe auto-initialization with longer delay to ensure navigation context is ready
+  // Initialize Plaid only after both auth is ready and tabs are mounted
   useEffect(() => {
-    if (authLoading || hasInitialized) {
+    if (!tabsMounted || authLoading || hasInitialized) {
       return;
     }
 
     if (user && plaidService) {
-      // Use a longer timeout to ensure navigation context is fully established
-      const timer = setTimeout(() => {
-        checkConnectedAccounts();
-        setHasInitialized(true);
-      }, 1000); // 1 second delay to be safe
-      
-      return () => clearTimeout(timer);
+      // Both auth and navigation are ready, safe to initialize
+      checkConnectedAccounts();
+      setHasInitialized(true);
     } else if (!user) {
+      // User not authenticated, reset state
       setHasConnectedAccounts(null);
       setPlaidLoading(false);
       setHasInitialized(true);
     }
-  }, [user, plaidService, authLoading, hasInitialized]);
+  }, [user, plaidService, tabsMounted, authLoading, hasInitialized]);
 
   const clearError = () => setError(null);
 
