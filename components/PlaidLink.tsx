@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Pressable, Alert } from 'react-native';
-import { PlaidLink, usePlaidEmitter } from 'react-native-plaid-link-sdk';
 import PlaidService, { LinkTokenResponse, PublicTokenExchangeResponse } from '@/services/plaidService';
+import React, { useEffect, useState } from 'react';
+import { Pressable, Text, View } from 'react-native';
+import { LinkExit, LinkSuccess, PlaidLink, usePlaidEmitter } from 'react-native-plaid-link-sdk';
 
 interface PlaidLinkComponentProps {
   fetchWithAuth: (url: string, options: RequestInit) => Promise<Response>;
@@ -43,10 +43,11 @@ export default function PlaidLinkComponent({
     }
   };
 
-  const handleSuccess = async (publicToken: string, metadata: any) => {
+  const handleSuccess = async (success: LinkSuccess) => {
     setIsLinking(true);
     try {
-      const institutionId = metadata?.institution?.institution_id;
+      const { publicToken, metadata } = success;
+      const institutionId = metadata?.institution?.id;
       const institutionName = metadata?.institution?.name;
 
       const response: PublicTokenExchangeResponse = await plaidService.exchangePublicToken(
@@ -65,9 +66,9 @@ export default function PlaidLinkComponent({
     }
   };
 
-  const handleExit = (error: any, metadata: any) => {
-    console.log('Plaid Link exited:', error, metadata);
-    if (error) {
+  const handleExit = (linkExit: LinkExit) => {
+    console.log('Plaid Link exited:', linkExit);
+    if (linkExit.error) {
       onError('Bank connection was cancelled or failed');
     }
   };
@@ -111,42 +112,51 @@ export default function PlaidLinkComponent({
         </View>
       )}
       
-      <PlaidLink
-        tokenConfig={{
-          token: linkToken,
-        }}
-        onSuccess={handleSuccess}
-        onExit={handleExit}
-      >
-        <View className="flex-1 items-center justify-center p-6">
-          <View className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
-            <Text className="text-2xl font-bold text-gray-800 text-center mb-2">
-              Connect Your Bank
+      {/* Custom UI explaining what will happen */}
+      <View className="flex-1 items-center justify-center p-6">
+        <View className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm mb-6">
+          <Text className="text-2xl font-bold text-gray-800 text-center mb-2">
+            Connect Your Bank
+          </Text>
+          <Text className="text-gray-600 text-center mb-6">
+            Securely connect your bank account to view your transactions and manage your finances.
+          </Text>
+          
+          <View className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            <Text className="text-blue-800 text-sm font-medium mb-1">
+              🔒 Secure & Private
             </Text>
-            <Text className="text-gray-600 text-center mb-6">
-              Securely connect your bank account to view your transactions and manage your finances.
+            <Text className="text-blue-700 text-xs">
+              Your bank credentials are never stored. We use bank-level security to protect your data.
             </Text>
-            
-            <View className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-              <Text className="text-blue-800 text-sm font-medium mb-1">
-                🔒 Secure & Private
-              </Text>
-              <Text className="text-blue-700 text-xs">
-                Your bank credentials are never stored. We use bank-level security to protect your data.
-              </Text>
-            </View>
+          </View>
 
-            <View className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <Text className="text-green-800 text-sm font-medium mb-1">
-                📊 View Transactions
-              </Text>
-              <Text className="text-green-700 text-xs">
-                Get insights into your spending patterns and financial health.
-              </Text>
-            </View>
+          <View className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <Text className="text-green-800 text-sm font-medium mb-1">
+              📊 View Transactions
+            </Text>
+            <Text className="text-green-700 text-xs">
+              Get insights into your spending patterns and financial health.
+            </Text>
           </View>
         </View>
-      </PlaidLink>
+
+        {/* PlaidLink component without custom UI inside */}
+        <PlaidLink
+          tokenConfig={{
+            token: linkToken,
+            noLoadingState: false,
+          }}
+          onSuccess={handleSuccess}
+          onExit={handleExit}
+        >
+          <Pressable className="bg-blue-500 py-3 px-6 rounded-lg">
+            <Text className="text-white font-semibold text-center text-lg">
+              Continue to Bank Selection
+            </Text>
+          </Pressable>
+        </PlaidLink>
+      </View>
     </View>
   );
 } 
