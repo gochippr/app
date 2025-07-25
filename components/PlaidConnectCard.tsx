@@ -84,7 +84,7 @@ export default function PlaidConnectCard() {
         <Text className="text-3xl">✅</Text>
       </View>
       
-      <View className="flex-row gap-2">
+      <View className="flex-row gap-2 mb-3">
         <Pressable
           onPress={() => router.push('/(tabs)/transactions')}
           className="flex-1 bg-gray-100 py-2 px-4 rounded-lg"
@@ -102,6 +102,22 @@ export default function PlaidConnectCard() {
           ) : (
             <Text className="text-gray-700 font-medium">Refresh</Text>
           )}
+        </Pressable>
+      </View>
+
+      <View className="flex-row gap-2">
+        <Pressable
+          onPress={handleConnectAccount}
+          className="flex-1 bg-blue-500 py-2 px-4 rounded-lg"
+        >
+          <Text className="text-white text-center font-medium">Add Another Account</Text>
+        </Pressable>
+        
+        <Pressable
+          onPress={() => router.push('/(tabs)/manage-accounts')}
+          className="flex-1 bg-gray-200 py-2 px-4 rounded-lg"
+        >
+          <Text className="text-gray-700 text-center font-medium">Manage Accounts</Text>
         </Pressable>
       </View>
     </View>
