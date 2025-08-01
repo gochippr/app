@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Pressable, Alert } from 'react-native';
-import { PlaidLink, usePlaidEmitter } from 'react-native-plaid-link-sdk';
 import PlaidService, { LinkTokenResponse, PublicTokenExchangeResponse } from '@/services/plaidService';
+import React, { useEffect, useState } from 'react';
+import { Pressable, Text, View } from 'react-native';
+import { LinkExit, LinkSuccess, PlaidLink, usePlaidEmitter } from 'react-native-plaid-link-sdk';
 
 interface PlaidLinkComponentProps {
   fetchWithAuth: (url: string, options: RequestInit) => Promise<Response>;
@@ -43,10 +43,11 @@ export default function PlaidLinkComponent({
     }
   };
 
-  const handleSuccess = async (publicToken: string, metadata: any) => {
+  const handleSuccess = async (success: LinkSuccess) => {
     setIsLinking(true);
     try {
-      const institutionId = metadata?.institution?.institution_id;
+      const { publicToken, metadata } = success;
+      const institutionId = metadata?.institution?.id;
       const institutionName = metadata?.institution?.name;
 
       const response: PublicTokenExchangeResponse = await plaidService.exchangePublicToken(
@@ -65,88 +66,126 @@ export default function PlaidLinkComponent({
     }
   };
 
-  const handleExit = (error: any, metadata: any) => {
-    console.log('Plaid Link exited:', error, metadata);
-    if (error) {
+  const handleExit = (linkExit: LinkExit) => {
+    console.log('Plaid Link exited:', linkExit);
+    if (linkExit.error) {
       onError('Bank connection was cancelled or failed');
     }
   };
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center">
-        <Text className="text-gray-600 text-lg">Initializing bank connection...</Text>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+        <Text style={{ color: '#203627', fontSize: 18, opacity: 0.6 }}>Initializing bank connection...</Text>
       </View>
     );
   }
 
   if (!linkToken) {
     return (
-      <View className="flex-1 items-center justify-center p-4">
-        <Text className="text-red-500 text-center mb-4">
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+        <Text style={{ color: '#DC2626', textAlign: 'center', marginBottom: 16, fontSize: 16 }}>
           Failed to initialize bank connection
         </Text>
         <Pressable
           onPress={createLinkToken}
-          className="bg-blue-500 px-4 py-2 rounded-lg"
+          style={{ backgroundColor: '#203627', paddingHorizontal: 32, paddingVertical: 12, borderRadius: 12 }}
         >
-          <Text className="text-white font-semibold">Retry</Text>
+          <Text style={{ color: '#EFEFEF', fontWeight: '600', fontSize: 16 }}>Retry</Text>
         </Pressable>
       </View>
     );
   }
 
   return (
-    <View className="flex-1">
+    <View style={{ flex: 1 }}>
       {isLinking && (
-        <View className="absolute inset-0 bg-black bg-opacity-50 items-center justify-center z-10">
-          <View className="bg-white p-6 rounded-lg">
-            <Text className="text-gray-800 text-lg font-semibold">
+        <View style={{ 
+          position: 'absolute', 
+          top: 0, 
+          left: 0, 
+          right: 0, 
+          bottom: 0, 
+          backgroundColor: 'rgba(32, 54, 39, 0.5)', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          zIndex: 10 
+        }}>
+          <View style={{ backgroundColor: 'white', padding: 24, borderRadius: 16, shadowColor: '#203627', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 5 }}>
+            <Text style={{ color: '#203627', fontSize: 18, fontWeight: '600' }}>
               Connecting your bank account...
             </Text>
-            <Text className="text-gray-600 text-center mt-2">
+            <Text style={{ color: '#203627', textAlign: 'center', marginTop: 8, opacity: 0.6 }}>
               Please wait while we securely connect your account.
             </Text>
           </View>
         </View>
       )}
       
-      <PlaidLink
-        tokenConfig={{
-          token: linkToken,
-        }}
-        onSuccess={handleSuccess}
-        onExit={handleExit}
-      >
-        <View className="flex-1 items-center justify-center p-6">
-          <View className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
-            <Text className="text-2xl font-bold text-gray-800 text-center mb-2">
-              Connect Your Bank
+      {/* Custom UI explaining what will happen */}
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <View style={{ 
+          backgroundColor: 'white', 
+          borderRadius: 20, 
+          shadowColor: '#203627',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.08,
+          shadowRadius: 16,
+          elevation: 8,
+          padding: 24, 
+          width: '100%', 
+          maxWidth: 350, 
+          marginBottom: 24 
+        }}>
+          <Text style={{ fontSize: 24, fontWeight: '600', color: '#203627', textAlign: 'center', marginBottom: 8 }}>
+            Connect Your Bank
+          </Text>
+          <Text style={{ color: '#203627', textAlign: 'center', marginBottom: 24, opacity: 0.7, fontSize: 16 }}>
+            Securely connect your bank account to view your transactions and manage your finances.
+          </Text>
+          
+          <View style={{ backgroundColor: '#9DC4D5', borderRadius: 16, padding: 16, marginBottom: 16, opacity: 0.9 }}>
+            <Text style={{ color: '#203627', fontSize: 14, fontWeight: '600', marginBottom: 4 }}>
+              🔒 Secure & Private
             </Text>
-            <Text className="text-gray-600 text-center mb-6">
-              Securely connect your bank account to view your transactions and manage your finances.
+            <Text style={{ color: '#203627', fontSize: 12, opacity: 0.8 }}>
+              Your bank credentials are never stored. We use bank-level security to protect your data.
             </Text>
-            
-            <View className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-              <Text className="text-blue-800 text-sm font-medium mb-1">
-                🔒 Secure & Private
-              </Text>
-              <Text className="text-blue-700 text-xs">
-                Your bank credentials are never stored. We use bank-level security to protect your data.
-              </Text>
-            </View>
+          </View>
 
-            <View className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <Text className="text-green-800 text-sm font-medium mb-1">
-                📊 View Transactions
-              </Text>
-              <Text className="text-green-700 text-xs">
-                Get insights into your spending patterns and financial health.
-              </Text>
-            </View>
+          <View style={{ backgroundColor: '#E8FF40', borderRadius: 16, padding: 16, opacity: 0.9 }}>
+            <Text style={{ color: '#203627', fontSize: 14, fontWeight: '600', marginBottom: 4 }}>
+              📊 View Transactions
+            </Text>
+            <Text style={{ color: '#203627', fontSize: 12, opacity: 0.8 }}>
+              Get insights into your spending patterns and financial health.
+            </Text>
           </View>
         </View>
-      </PlaidLink>
+
+        {/* PlaidLink component - touch events handled directly by PlaidLink */}
+        <PlaidLink
+          tokenConfig={{
+            token: linkToken,
+            noLoadingState: false,
+          }}
+          onSuccess={handleSuccess}
+          onExit={handleExit}
+        >
+          <View style={{ 
+            backgroundColor: '#203627', 
+            paddingVertical: 14, 
+            paddingHorizontal: 32, 
+            borderRadius: 12,
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <Text style={{ color: '#EFEFEF', fontWeight: '600', textAlign: 'center', fontSize: 16 }}>
+              Continue to Bank Selection
+            </Text>
+          </View>
+        </PlaidLink>
+      </View>
     </View>
   );
 } 

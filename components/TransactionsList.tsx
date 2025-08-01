@@ -17,7 +17,7 @@ export default function TransactionsList({ fetchWithAuth }: TransactionsListProp
   useEffect(() => {
     loadTransactions();
   }, []);
-
+ 
   const loadTransactions = async () => {
     try {
       setIsLoading(true);

@@ -1,31 +1,7 @@
-import { useEffect, useState } from 'react';
-import { useAuth } from '@/context/auth';
-import { useRouter } from 'expo-router';
-import LoadingLayout from '@/components/LoadingLayout';
-import AuthView from '@/components/AuthView';
+import { Redirect } from 'expo-router';
 
-export default function LoginPage() {
-  const [isMounted, setIsMounted] = useState(false);
-  const { user, isLoading } = useAuth();
-  const router = useRouter();
-  
-  useEffect(() => {
-    Promise.resolve().then(() => setIsMounted(true));
-  }, []);
-  
-  useEffect(() => {
-    if (!isMounted) {
-      return;
-    }
-
-    if (user) {
-      router.replace('/main');
-    }
-  }, [user, isMounted]);
-
-  return (
-    <LoadingLayout isLoading={isLoading}>
-      <AuthView />
-    </LoadingLayout>
-  );
-} 
+export default function Index() {
+  // This file exists purely as a redirect.
+  // The actual navigation logic is handled by the root layout.
+  return <Redirect href="/(auth)/login" />;
+}
