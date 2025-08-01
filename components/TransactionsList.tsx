@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, RefreshControl, Pressable } from 'react-native';
 import PlaidService, { PlaidTransaction } from '@/services/plaidService';
+import React, { useEffect, useState } from 'react';
+import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 
 interface TransactionsListProps {
   fetchWithAuth: (url: string, options: RequestInit) => Promise<Response>;
@@ -126,9 +126,9 @@ export default function TransactionsList({ fetchWithAuth }: TransactionsListProp
           <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />
         }
       >
-        {transactions.map((transaction) => (
+        {transactions.map((transaction, index) => (
           <View 
-            key={transaction.id} 
+            key={transaction.id || `transaction-${index}`} 
             className="bg-white border-b border-gray-100 p-4"
           >
             <View className="flex-row items-center justify-between">
