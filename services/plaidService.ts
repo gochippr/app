@@ -194,6 +194,38 @@ class PlaidService {
 
     return this.getTransactions(firstInstitution.item_id, startDate, endDate);
   }
+
+  // Delete a connected institution
+  async deleteInstitution(institutionId: string): Promise<void> {
+    const response = await this.fetchWithAuth(`${BACKEND_URL}/plaid/institutions/${institutionId}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to delete institution: ${response.statusText}`);
+    }
+  }
+
+  // Create link token for update mode (relinking)
+  async createUpdateLinkToken(itemId: string): Promise<LinkTokenResponse> {
+    const response = await this.fetchWithAuth(`${BACKEND_URL}/plaid/create_link_token`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        client_name: 'Chippr',
+        mode: 'update',
+        item_id: itemId,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to create update link token: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
 }
 
 export default PlaidService; 
