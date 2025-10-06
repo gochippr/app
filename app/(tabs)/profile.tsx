@@ -3,9 +3,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { syncAccounts } from '@/services/accountService';
 
 export default function ProfilePage() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, fetchWithAuth } = useAuth();
   const router = useRouter();
 
   const handleSignOut = async () => {
@@ -16,6 +17,17 @@ export default function ProfilePage() {
       console.error('Sign out error:', error);
     }
   };
+
+  const handleSync = async () => {
+    if (!fetchWithAuth) return;
+    try {
+      await syncAccounts(fetchWithAuth);
+      alert('Accounts synced successfully!');
+    } catch (error) {
+      console.error('Sync error:', error);
+      alert('Failed to sync accounts. Please try again.');
+    }
+  }
 
   return (
     <View style={styles.container}>
@@ -105,10 +117,17 @@ export default function ProfilePage() {
             </Pressable>
           </View>
 
+          <View style={styles.dangerSection}>
+            <Pressable style={styles.dangerItem} onPress={handleSync}>
+              <Ionicons name="sync" size={20} color="#DC2626" />
+              <Text style={styles.dangerText}>Sync Account</Text>
+            </Pressable>
+          </View>
+
           {/* App Version */}
           <View style={styles.versionSection}>
-            <Text style={styles.versionText}>BudgetBuddy v1.0.0</Text>
-            <Text style={styles.versionSubtext}>Made with ❤️ for Gen Z</Text>
+            <Text style={styles.versionText}>Chippr v1.0.0</Text>
+            <Text style={styles.versionSubtext}>Made with ❤️ for you</Text>
           </View>
         </ScrollView>
       </SafeAreaView>
