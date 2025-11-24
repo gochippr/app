@@ -435,12 +435,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return response;
     } else {
       // For native: Use token in Authorization header
+      const headers = { ...options.headers, Authorization: `Bearer ${accessToken}` };
       const response = await fetch(url, {
         ...options,
-        headers: {
-          ...options.headers,
-          Authorization: `Bearer ${accessToken}`,
-        },
+        headers: headers,
       });
 
       // If the response indicates an authentication error, try to refresh the token
