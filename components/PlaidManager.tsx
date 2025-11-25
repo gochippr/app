@@ -6,9 +6,10 @@ import TransactionsList from './TransactionsList';
 
 interface PlaidManagerProps {
   fetchWithAuth: (url: string, options: RequestInit) => Promise<Response>;
+  user: any; // Add user prop
 }
 
-export default function PlaidManager({ fetchWithAuth }: PlaidManagerProps) {
+export default function PlaidManager({ fetchWithAuth, user }: PlaidManagerProps) {
   const [hasConnectedAccounts, setHasConnectedAccounts] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -17,8 +18,11 @@ export default function PlaidManager({ fetchWithAuth }: PlaidManagerProps) {
   const plaidService = new PlaidService(fetchWithAuth);
 
   useEffect(() => {
-    checkConnectedAccounts();
-  }, []);
+    // Only check connected accounts if we have a user (authenticated)
+    if (user) {
+      checkConnectedAccounts();
+    }
+  }, [user]);
 
   const checkConnectedAccounts = async () => {
     try {
@@ -52,6 +56,15 @@ export default function PlaidManager({ fetchWithAuth }: PlaidManagerProps) {
   const handleRefresh = () => {
     checkConnectedAccounts();
   };
+
+  // Show loading if user is not authenticated yet
+  if (!user) {
+    return (
+      <View className="flex-1 items-center justify-center">
+        <Text className="text-gray-600 text-lg">Loading...</Text>
+      </View>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -95,42 +108,18 @@ export default function PlaidManager({ fetchWithAuth }: PlaidManagerProps) {
 
   if (hasConnectedAccounts === false) {
     return (
-      <View className="flex-1 items-center justify-center p-6 bg-gray-50">
-        <View className="bg-white rounded-xl shadow-lg p-6 w-full max-w-sm">
-          <View className="items-center mb-6">
-            <View className="w-16 h-16 bg-blue-100 rounded-full items-center justify-center mb-4">
+      
+      <View className="w-[40%] flex items-center justify-center p-6 bg-white rounded-xl shadow-lg p-6">
+        
               <Text className="text-2xl">🏦</Text>
-            </View>
             <Text className="text-xl font-bold text-gray-800 text-center mb-2">
               Connect Your Bank Account
             </Text>
             <Text className="text-gray-600 text-center">
               Link your bank account to start tracking your transactions and managing your finances.
             </Text>
-          </View>
 
-          <View className="space-y-3 mb-6">
-            <View className="flex-row items-center">
-              <View className="w-8 h-8 bg-green-100 rounded-full items-center justify-center mr-3">
-                <Text className="text-green-600 text-sm">✓</Text>
-              </View>
-              <Text className="text-gray-700 flex-1">View recent transactions</Text>
-            </View>
-            
-            <View className="flex-row items-center">
-              <View className="w-8 h-8 bg-green-100 rounded-full items-center justify-center mr-3">
-                <Text className="text-green-600 text-sm">✓</Text>
-              </View>
-              <Text className="text-gray-700 flex-1">Track spending patterns</Text>
-            </View>
-            
-            <View className="flex-row items-center">
-              <View className="w-8 h-8 bg-green-100 rounded-full items-center justify-center mr-3">
-                <Text className="text-green-600 text-sm">✓</Text>
-              </View>
-              <Text className="text-gray-700 flex-1">Bank-level security</Text>
-            </View>
-          </View>
+          
 
           <Pressable
             onPress={handleConnectAccount}
@@ -145,7 +134,6 @@ export default function PlaidManager({ fetchWithAuth }: PlaidManagerProps) {
             Your bank credentials are never stored. We use Plaid to securely connect to your bank.
           </Text>
         </View>
-      </View>
     );
   }
 
