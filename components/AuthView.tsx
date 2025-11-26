@@ -1,7 +1,7 @@
+import { useAuth } from '@/context/auth';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef, useState } from 'react';
-import { useAuth } from '@/context/auth';
 import {
   ActivityIndicator,
   Alert,
@@ -43,7 +43,7 @@ const AuthScreen: React.FC = () => {
   const handleGoogleAuth = async () => {
     setIsLoading('google');
     try {
-      signIn();
+      await signIn();
       // Navigation will be handled by the auth context/state changes
     } catch (error) {
       console.error('Google auth error:', error);
