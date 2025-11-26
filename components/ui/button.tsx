@@ -6,7 +6,7 @@ interface ButtonProps {
   onPress?: () => void;
   disabled?: boolean;
   className?: string;
-  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link' | 'accent';
   size?: 'default' | 'sm' | 'lg' | 'icon';
 }
 
@@ -21,12 +21,13 @@ export const Button: React.FC<ButtonProps> = ({
   const baseStyles = 'flex items-center justify-center rounded-md font-medium';
   
   const variants = {
-    default: 'bg-gray-900 text-white',
+    default: 'bg-[#203627] text-[#EFEFEF]',
     destructive: 'bg-red-600 text-white',
-    outline: 'border border-gray-300 bg-white text-gray-700',
-    secondary: 'bg-gray-100 text-gray-900',
-    ghost: 'text-gray-700',
-    link: 'text-blue-600 underline'
+    outline: 'border border-[#9DC4D5] bg-white text-[#203627]',
+    secondary: 'bg-[#9DC4D5] text-[#203627]',
+    ghost: 'text-[#203627]',
+    link: 'text-[#9DC4D5] underline',
+    accent: 'bg-[#E8FF40] text-[#203627]'
   };
 
   const sizes = {
