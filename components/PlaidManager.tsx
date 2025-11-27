@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Pressable } from 'react-native';
 import PlaidService from '@/services/plaidService';
+import React, { useEffect, useState } from 'react';
+import { Pressable, Text, View } from 'react-native';
 import PlaidLinkComponent from './PlaidLink';
 import TransactionsList from './TransactionsList';
 
