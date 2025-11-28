@@ -91,6 +91,12 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="plaid-link"
+        options={{
+          href: null, // Hide from tab bar
+        }}
+      />
     </Tabs>
   );
 }

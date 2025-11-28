@@ -1,32 +1,58 @@
 import { AuthProvider, useAuth } from "@/context/auth";
-import { Stack, useRootNavigationState, useRouter, useSegments } from "expo-router";
-import { useEffect } from "react";
+import { PlaidProvider } from "@/context/plaid";
+import { Stack } from "expo-router";
+import * as SplashScreen from 'expo-splash-screen';
+import { useEffect, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import "../global.css";
 
-function InitialLayout() {
-  const { user, isLoading } = useAuth();
-  const segments = useSegments();
-  const router = useRouter();
-  const navigationState = useRootNavigationState();
+// Keep the splash screen visible while we fetch resources
+SplashScreen.preventAutoHideAsync();
+
+export default function RootLayout() {
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    // Wait for navigation to be ready and auth check to complete
-    if (!navigationState?.key || isLoading) return;
-
-    const inAuthGroup = segments[0] === "(auth)";
-    const inTabsGroup = segments[0] === "(tabs)";
-
-    if (user && !inTabsGroup) {
-      // User is signed in but not in the tabs group
-      router.replace("/(tabs)");
-    } else if (!user && !inAuthGroup && segments[0] !== undefined) {
-      // User is not signed in and not in the auth group
-      router.replace("/(auth)/login");
+    // Prepare the app
+    async function prepare() {
+      try {
+        // Add any pre-loading tasks here
+        // Artificial delay to ensure everything is mounted
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } catch (e) {
+        console.warn(e);
+      } finally {
+        setIsReady(true);
+        await SplashScreen.hideAsync();
+      }
     }
-  }, [user, segments, isLoading, router, navigationState]);
 
-  if (isLoading) {
+    prepare();
+  }, []);
+
+  if (!isReady) {
+    return null;
+  }
+
+  return (
+    <AuthProvider>
+      <PlaidProvider>
+        <RootNavigator />
+      </PlaidProvider>
+    </AuthProvider>
+  );
+}
+
+function RootNavigator() {
+  const { user, isLoading } = useAuth();
+  const [navigationReady, setNavigationReady] = useState(false);
+
+  useEffect(() => {
+    // Ensure navigation is ready before rendering
+    setNavigationReady(true);
+  }, []);
+
+  if (isLoading || !navigationReady) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#EFEFEF' }}>
         <ActivityIndicator size="large" color="#203627" />
@@ -35,18 +61,12 @@ function InitialLayout() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="index" />
+    <Stack 
+      screenOptions={{ headerShown: false }}
+      initialRouteName={user ? "(tabs)" : "(auth)/login"}
+    >
       <Stack.Screen name="(auth)" />
       <Stack.Screen name="(tabs)" />
     </Stack>
-  );
-}
-
-export default function RootLayout() {
-  return (
-    <AuthProvider>
-      <InitialLayout />
-    </AuthProvider>
   );
 }
