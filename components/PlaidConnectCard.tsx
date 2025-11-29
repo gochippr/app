@@ -24,7 +24,7 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 export default function PlaidConnectCard() {
   const router = useRouter();
-  const { hasConnectedAccounts, isLoading, error, checkConnectedAccounts } = usePlaid();
+  const { hasConnectedAccounts, checkConnectedAccounts, error, plaidLoading } = usePlaid();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleConnectAccount = () => {
@@ -37,7 +37,7 @@ export default function PlaidConnectCard() {
     setIsRefreshing(false);
   };
 
-  if (isLoading) {
+  if (plaidLoading) {
     return (
       <View className="bg-white rounded-xl p-6 items-center justify-center h-48">
         <ActivityIndicator size="large" color="#203627" />
@@ -126,3 +126,25 @@ export default function PlaidConnectCard() {
     </View>
   );
 }
+
+// In PlaidConnectCard.tsx
+// export default function PlaidConnectCard() {
+//     console.log('PlaidConnectCard rendering');
+    
+//     try {
+//       const router = useRouter();
+//       console.log('Router initialized');
+//     } catch (e) {
+//       console.error('Router error:', e);
+//     }
+    
+//     try {
+//       const context = usePlaid();
+//       console.log('Plaid context:', context);
+//       console.log('isLoading type:', typeof context.plaidLoading);
+//     } catch (e) {
+//       console.error('Plaid context error:', e);
+//     }
+    
+//     return <View><Text>Debug</Text></View>;
+//   }

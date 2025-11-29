@@ -4,18 +4,20 @@ import { useAuth } from './auth';
 
 interface PlaidContextType {
   hasConnectedAccounts: boolean | null;
-  isLoading: boolean;
+  plaidLoading: boolean;
   error: string | null;
   checkConnectedAccounts: () => Promise<void>;
   setHasConnectedAccounts: (value: boolean) => void;
   clearError: () => void;
 }
 
+// error comes from isLoading
+
 const PlaidContext = createContext<PlaidContextType | undefined>(undefined);
 
 export function PlaidProvider({ children }: { children: React.ReactNode }) {
   const [hasConnectedAccounts, setHasConnectedAccounts] = useState<boolean | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [plaidLoading, setPlaidLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user, fetchWithAuth, isLoading: authLoading } = useAuth();
 
@@ -34,12 +36,12 @@ export function PlaidProvider({ children }: { children: React.ReactNode }) {
     if (!plaidService) {
       console.error('PlaidService not initialized');
       setError('Service not initialized');
-      setIsLoading(false);
+      setPlaidLoading(true);
       return;
     }
 
     try {
-      setIsLoading(true);
+      setPlaidLoading(true);
       setError(null);
       const hasAccounts = await plaidService.hasConnectedAccounts();
       setHasConnectedAccounts(hasAccounts);
@@ -59,7 +61,7 @@ export function PlaidProvider({ children }: { children: React.ReactNode }) {
       }
       setHasConnectedAccounts(false);
     } finally {
-      setIsLoading(false);
+      setPlaidLoading(true);
     }
   };
 
@@ -73,7 +75,7 @@ export function PlaidProvider({ children }: { children: React.ReactNode }) {
       checkConnectedAccounts();
     } else if (!user) {
       setHasConnectedAccounts(null);
-      setIsLoading(false);
+      setPlaidLoading(false);
     }
   }, [user, plaidService, authLoading]);
 
@@ -83,7 +85,7 @@ export function PlaidProvider({ children }: { children: React.ReactNode }) {
     <PlaidContext.Provider
       value={{
         hasConnectedAccounts,
-        isLoading,
+        plaidLoading,
         error,
         checkConnectedAccounts,
         setHasConnectedAccounts,
@@ -94,6 +96,8 @@ export function PlaidProvider({ children }: { children: React.ReactNode }) {
     </PlaidContext.Provider>
   );
 }
+
+
 
 export function usePlaid() {
   const context = useContext(PlaidContext);
