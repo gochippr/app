@@ -11,17 +11,16 @@ interface PlaidContextType {
   clearError: () => void;
 }
 
-// error comes from isLoading
-
 const PlaidContext = createContext<PlaidContextType | undefined>(undefined);
 
 export function PlaidProvider({ children }: { children: React.ReactNode }) {
   const [hasConnectedAccounts, setHasConnectedAccounts] = useState<boolean | null>(null);
-  const [plaidLoading, setPlaidLoading] = useState(true);
+  const [plaidLoading, setPlaidLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasInitialized, setHasInitialized] = useState(false);
   const { user, fetchWithAuth, isLoading: authLoading } = useAuth();
 
-  // Don't create plaidService until auth is ready
+  // Simplified plaidService creation - only depend on essential auth state
   const plaidService = useMemo(() => {
     if (!fetchWithAuth || authLoading) return null;
     try {
@@ -36,7 +35,6 @@ export function PlaidProvider({ children }: { children: React.ReactNode }) {
     if (!plaidService) {
       console.error('PlaidService not initialized');
       setError('Service not initialized');
-      setPlaidLoading(true);
       return;
     }
 
@@ -47,7 +45,6 @@ export function PlaidProvider({ children }: { children: React.ReactNode }) {
       setHasConnectedAccounts(hasAccounts);
     } catch (error) {
       console.error('Error checking connected accounts:', error);
-      // Check if it's a network/auth error vs other errors
       if (error instanceof Error) {
         if (error.message.includes('401') || error.message.includes('403')) {
           setError('Authentication required');
@@ -61,23 +58,30 @@ export function PlaidProvider({ children }: { children: React.ReactNode }) {
       }
       setHasConnectedAccounts(false);
     } finally {
-      setPlaidLoading(true);
+      setPlaidLoading(false);
     }
   };
 
+  // Safe auto-initialization with longer delay to ensure navigation context is ready
   useEffect(() => {
-    // Wait for auth to be ready before checking accounts
-    if (authLoading) {
+    if (authLoading || hasInitialized) {
       return;
     }
 
     if (user && plaidService) {
-      checkConnectedAccounts();
+      // Use a longer timeout to ensure navigation context is fully established
+      const timer = setTimeout(() => {
+        checkConnectedAccounts();
+        setHasInitialized(true);
+      }, 1000); // 1 second delay to be safe
+      
+      return () => clearTimeout(timer);
     } else if (!user) {
       setHasConnectedAccounts(null);
       setPlaidLoading(false);
+      setHasInitialized(true);
     }
-  }, [user, plaidService, authLoading]);
+  }, [user, plaidService, authLoading, hasInitialized]);
 
   const clearError = () => setError(null);
 
@@ -96,8 +100,6 @@ export function PlaidProvider({ children }: { children: React.ReactNode }) {
     </PlaidContext.Provider>
   );
 }
-
-
 
 export function usePlaid() {
   const context = useContext(PlaidContext);

@@ -7,7 +7,7 @@ import { Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 
 export default function TransactionsPage() {
   const { fetchWithAuth } = useAuth();
-  const { hasConnectedAccounts, isLoading } = usePlaid();
+  const { hasConnectedAccounts, plaidLoading: isLoading } = usePlaid();
   const router = useRouter();
 
   if (!hasConnectedAccounts && !isLoading) {
