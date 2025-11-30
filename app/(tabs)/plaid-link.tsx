@@ -2,7 +2,7 @@ import PlaidLinkComponent from '@/components/PlaidLink';
 import { useAuth } from '@/context/auth';
 import { usePlaid } from '@/context/plaid';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
 import { Pressable, SafeAreaView, Text, View } from 'react-native';
 
@@ -10,10 +10,19 @@ export default function PlaidLinkPage() {
   const router = useRouter();
   const { fetchWithAuth } = useAuth();
   const { setHasConnectedAccounts } = usePlaid();
+  const params = useLocalSearchParams();
+  
+  const isRelinkMode = params.relinkMode === 'true';
+  const institutionId = params.institutionId as string;
+  const institutionName = params.institutionName as string;
 
   const handleSuccess = () => {
     setHasConnectedAccounts(true);
-    router.replace('/(tabs)');
+    if (isRelinkMode) {
+      router.replace('/(tabs)/manage-accounts');
+    } else {
+      router.replace('/(tabs)');
+    }
   };
 
   const handleError = (error: string) => {
@@ -58,7 +67,7 @@ export default function PlaidLinkPage() {
             fontWeight: 'bold',
             color: '#EFEFEF'
           }}>
-            Connect Your Bank
+            {isRelinkMode ? `Relink ${institutionName || 'Bank'}` : 'Connect Your Bank'}
           </Text>
         </View>
 
@@ -67,6 +76,8 @@ export default function PlaidLinkPage() {
           fetchWithAuth={fetchWithAuth}
           onSuccess={handleSuccess}
           onError={handleError}
+          relinkMode={isRelinkMode}
+          relinkInstitutionId={institutionId}
         />
       </View>
     </SafeAreaView>

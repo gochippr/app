@@ -7,12 +7,16 @@ interface PlaidLinkComponentProps {
   fetchWithAuth: (url: string, options: RequestInit) => Promise<Response>;
   onSuccess: () => void;
   onError: (error: string) => void;
+  relinkMode?: boolean;
+  relinkInstitutionId?: string;
 }
 
 export default function PlaidLinkComponent({ 
   fetchWithAuth, 
   onSuccess, 
-  onError 
+  onError,
+  relinkMode = false,
+  relinkInstitutionId
 }: PlaidLinkComponentProps) {
   const [linkToken, setLinkToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -33,7 +37,22 @@ export default function PlaidLinkComponent({
   const createLinkToken = async () => {
     setIsLoading(true);
     try {
-      const response: LinkTokenResponse = await plaidService.createLinkToken();
+      let response: LinkTokenResponse;
+      if (relinkMode && relinkInstitutionId) {
+        // For relink mode, we need to find the item_id for this institution
+        const institutions = await plaidService.getInstitutions();
+        const institution = institutions.institutions.find(
+          inst => inst.institution_id === relinkInstitutionId
+        );
+        
+        if (institution) {
+          response = await plaidService.createUpdateLinkToken(institution.item_id);
+        } else {
+          throw new Error('Institution not found');
+        }
+      } else {
+        response = await plaidService.createLinkToken();
+      }
       setLinkToken(response.link_token);
     } catch (error) {
       console.error('Error creating link token:', error);
@@ -46,21 +65,27 @@ export default function PlaidLinkComponent({
   const handleSuccess = async (success: LinkSuccess) => {
     setIsLinking(true);
     try {
-      const { publicToken, metadata } = success;
-      const institutionId = metadata?.institution?.id;
-      const institutionName = metadata?.institution?.name;
+      if (relinkMode) {
+        // For relink mode, the connection is already updated
+        console.log('Successfully relinked account');
+        onSuccess();
+      } else {
+        const { publicToken, metadata } = success;
+        const institutionId = metadata?.institution?.id;
+        const institutionName = metadata?.institution?.name;
 
-      const response: PublicTokenExchangeResponse = await plaidService.exchangePublicToken(
-        publicToken,
-        institutionId,
-        institutionName
-      );
+        const response: PublicTokenExchangeResponse = await plaidService.exchangePublicToken(
+          publicToken,
+          institutionId,
+          institutionName
+        );
 
-      console.log('Successfully connected account:', response);
-      onSuccess();
+        console.log('Successfully connected account:', response);
+        onSuccess();
+      }
     } catch (error) {
-      console.error('Error exchanging public token:', error);
-      onError('Failed to connect bank account');
+      console.error('Error processing link success:', error);
+      onError('Failed to process bank connection');
     } finally {
       setIsLinking(false);
     }
@@ -138,10 +163,12 @@ export default function PlaidLinkComponent({
           marginBottom: 24 
         }}>
           <Text style={{ fontSize: 24, fontWeight: '600', color: '#203627', textAlign: 'center', marginBottom: 8 }}>
-            Connect Your Bank
+            {relinkMode ? 'Relink Your Bank' : 'Connect Your Bank'}
           </Text>
           <Text style={{ color: '#203627', textAlign: 'center', marginBottom: 24, opacity: 0.7, fontSize: 16 }}>
-            Securely connect your bank account to view your transactions and manage your finances.
+            {relinkMode 
+              ? 'Your bank connection has expired. Please relink your account to continue accessing your transactions.'
+              : 'Securely connect your bank account to view your transactions and manage your finances.'}
           </Text>
           
           <View style={{ backgroundColor: '#9DC4D5', borderRadius: 16, padding: 16, marginBottom: 16, opacity: 0.9 }}>
