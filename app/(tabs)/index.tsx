@@ -1,13 +1,12 @@
-import React, { useState } from 'react';
-import { View, Text, Pressable, SafeAreaView, StyleSheet, ScrollView } from 'react-native';
-import { useRouter } from 'expo-router';
-import PlaidManager from '@/components/PlaidManager';
-import MockProtectedApi from '@/services/mockProtectedApi';
+import PlaidConnectCard from '@/components/PlaidConnectCard';
 import { useAuth } from '@/context/auth';
-import BottomNav from '@/components/BottomNav';
+import MockProtectedApi from '@/services/mockProtectedApi';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-export default function MainPage() {
+export default function HomePage() {
   const [protectedData, setProtectedData] = useState({});
   const { user, signOut, fetchWithAuth } = useAuth();
   const router = useRouter();
@@ -15,7 +14,7 @@ export default function MainPage() {
   const handleSignOut = async () => {
     try {
       await signOut();
-      router.replace('/');
+      router.replace('/(auth)/login');
     } catch (error) {
       console.error('Sign out error:', error);
     }
@@ -41,7 +40,11 @@ export default function MainPage() {
         </View>
 
         {/* Main Content */}
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          style={styles.content} 
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.contentContainer}
+        >
           {/* Quick Stats */}
           <View style={styles.statsContainer}>
             <View style={[styles.statCard, styles.statCard1]}>
@@ -58,7 +61,7 @@ export default function MainPage() {
 
           {/* Plaid Integration */}
           <View style={styles.plaidSection}>
-            <PlaidManager fetchWithAuth={fetchWithAuth} user={user} />
+            <PlaidConnectCard />
           </View>
 
           {/* Recent Activity */}
@@ -111,7 +114,6 @@ export default function MainPage() {
           </View>
         </ScrollView>
       </SafeAreaView>
-      <BottomNav />
     </View>
   );
 }
@@ -165,7 +167,9 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingBottom: 100,
+  },
+  contentContainer: {
+    paddingBottom: 20,
   },
   statsContainer: {
     flexDirection: 'row',
