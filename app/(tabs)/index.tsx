@@ -1,115 +1,219 @@
-import PlaidConnectCard from '@/components/PlaidConnectCard';
-import { useAuth } from '@/context/auth';
-import MockProtectedApi from '@/services/mockProtectedApi';
-import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import PlaidConnectCard from "@/components/PlaidConnectCard";
+import { useAuth } from "@/context/auth";
+import MockProtectedApi from "@/services/mockProtectedApi";
+import UserAccountsService, {
+  UserAccountsResponse,
+} from "@/services/userAccountsService";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
+import {
+  Pressable,
+  RefreshControl,
+  SafeAreaView,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 
 export default function HomePage() {
   const [protectedData, setProtectedData] = useState({});
+  const [userAccounts, setUserAccounts] = useState<UserAccountsResponse | null>(
+    null
+  );
+  const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
+  const [accountsError, setAccountsError] = useState<string | null>(null);
   const { user, signOut, fetchWithAuth } = useAuth();
   const router = useRouter();
+
+  // Fetch user accounts when component mounts
+  useEffect(() => {
+    if (user) {
+      fetchUserAccounts();
+    }
+  }, [user]);
+
+  const fetchUserAccounts = async () => {
+    setIsLoadingAccounts(true);
+    setAccountsError(null);
+
+    try {
+      const accountsData =
+        await UserAccountsService.getUserAccounts(fetchWithAuth);
+      setUserAccounts(accountsData);
+      console.log("User accounts loaded:", accountsData);
+    } catch (error) {
+      console.error("Error fetching user accounts:", error);
+      setAccountsError(
+        error instanceof Error ? error.message : "Failed to load accounts"
+      );
+    } finally {
+      setIsLoadingAccounts(false);
+    }
+  };
 
   const handleSignOut = async () => {
     try {
       await signOut();
-      router.replace('/(auth)/login');
+      router.replace("/(auth)/login");
     } catch (error) {
-      console.error('Sign out error:', error);
+      console.error("Sign out error:", error);
     }
   };
 
+  // Calculate total balance from all accounts
+
   return (
-    <View style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
+    <View className="flex-1 bg-gray-100">
+      <SafeAreaView className="flex-1">
         {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerContent}>
-            <View style={styles.headerLeft}>
-              <Text style={styles.greeting}>Welcome back,</Text>
-              <Text style={styles.userName}>{user?.name || 'User'}!</Text>
+        <View className="bg-green-900 px-5 pt-4 pb-6 rounded-b-3xl shadow-lg">
+          <View className="flex-row justify-between items-center">
+            <View className="flex-1">
+              <Text className="text-base text-blue-200 mb-1">Welcome back,</Text>
+              <Text className="text-3xl font-bold text-gray-100">{user?.name || "User"}!</Text>
             </View>
-            <Pressable
-              onPress={handleSignOut}
-              style={styles.signOutButton}
-            >
+            <Pressable onPress={handleSignOut} className="w-11 h-11 bg-blue-200/20 rounded-full justify-center items-center">
               <Ionicons name="log-out-outline" size={24} color="#EFEFEF" />
             </Pressable>
           </View>
         </View>
 
         {/* Main Content */}
-        <ScrollView 
-          style={styles.content} 
+        <ScrollView
+          className="flex-1"
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.contentContainer}
+          contentContainerStyle={{ paddingBottom: 20 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={isLoadingAccounts}
+              onRefresh={fetchUserAccounts}
+              colors={["#203627"]}
+              tintColor="#203627"
+            />
+          }
         >
           {/* Quick Stats */}
-          <View style={styles.statsContainer}>
-            <View style={[styles.statCard, styles.statCard1]}>
-              <Text style={styles.statEmoji}>💰</Text>
-              <Text style={styles.statLabel}>Balance</Text>
-              <Text style={styles.statValue}>$1,234</Text>
+          <View className="flex-row px-5 pt-6 gap-4">
+            <View className="flex-1 p-5 rounded-2xl items-center bg-lime-300 shadow-sm">
+              <Text className="text-4xl mb-2">💰</Text>
+              <Text className="text-sm text-green-900 opacity-70 mb-1">Total Balance</Text>
+              <Text className="text-2xl font-bold text-green-900">
+                {isLoadingAccounts && !userAccounts ? "Loading..." : `$${0}`}
+              </Text>
             </View>
-            <View style={[styles.statCard, styles.statCard2]}>
-              <Text style={styles.statEmoji}>📈</Text>
-              <Text style={styles.statLabel}>Saved</Text>
-              <Text style={styles.statValue}>$456</Text>
+            <View className="flex-1 p-5 rounded-2xl items-center bg-blue-300 shadow-sm">
+              <Text className="text-4xl mb-2">🏦</Text>
+              <Text className="text-sm text-green-900 opacity-70 mb-1">Accounts</Text>
+              <Text className="text-2xl font-bold text-green-900">
+                {isLoadingAccounts && !userAccounts
+                  ? "..."
+                  : userAccounts?.total_accounts || 0}
+              </Text>
             </View>
           </View>
 
+          {/* Loading State */}
+          {isLoadingAccounts && !userAccounts && (
+            <View className="m-5 p-5 bg-gray-200 rounded-xl items-center justify-center">
+              <Text className="text-lg font-bold text-green-900 mb-2">Loading your accounts...</Text>
+              <Text className="text-sm text-green-900 opacity-60">
+                This may take a moment on first sync
+              </Text>
+            </View>
+          )}
+
+          {/* Accounts Status */}
+          {accountsError && (
+            <View className="m-5 p-4 bg-red-50 rounded-xl border border-red-300 items-center">
+              <Text className="text-red-500 text-sm text-center mb-2">
+                Error loading accounts: {accountsError}
+              </Text>
+              <Pressable onPress={fetchUserAccounts} className="bg-red-500 py-2 px-5 rounded-lg">
+                <Text className="text-white text-sm font-semibold">Retry</Text>
+              </Pressable>
+            </View>
+          )}
+
+          {/* Account Ingestion Status */}
+          {userAccounts?.ingestion_started && (
+            <View className="m-5 p-4 bg-blue-50 rounded-xl border border-blue-200">
+              <Text className="text-lg font-bold text-blue-900 mb-2">🔄 Account Sync</Text>
+              <Text className="text-sm text-blue-700">
+                {userAccounts.total_accounts} accounts synced from your banks
+              </Text>
+            </View>
+          )}
+
+          {/* Account Sync Status */}
+          {!userAccounts?.ingestion_started &&
+            userAccounts &&
+            userAccounts.total_accounts > 0 && (
+              <View className="m-5 p-4 bg-green-50 rounded-xl border border-green-200">
+                <Text className="text-lg font-bold text-green-900 mb-2">✅ Accounts Up to Date</Text>
+                <Text className="text-sm text-green-700">
+                  All {userAccounts.total_accounts} accounts are synced
+                </Text>
+              </View>
+            )}
+
+          {/* Account Details */}
+          {userAccounts && userAccounts.accounts.length > 0 && (
+            <View className="m-5">
+              <Text className="text-xl font-bold text-green-900 mb-4">Your Accounts</Text>
+            </View>
+          )}
+
           {/* Plaid Integration */}
-          <View style={styles.plaidSection}>
+          <View className="m-5">
             <PlaidConnectCard />
           </View>
 
           {/* Recent Activity */}
-          <View style={styles.activitySection}>
-            <Text style={styles.sectionTitle}>Recent Activity</Text>
-            <View style={styles.activityCard}>
-              <View style={styles.activityIcon}>
+          <View className="m-5">
+            <Text className="text-xl font-bold text-green-900 mb-4">Recent Activity</Text>
+            <View className="bg-white p-4 rounded-xl mb-3 flex-row items-center border border-gray-200">
+              <View className="w-10 h-10 bg-orange-100 rounded-full items-center justify-center mr-3">
                 <Text>🍕</Text>
               </View>
-              <View style={styles.activityContent}>
-                <Text style={styles.activityTitle}>Pizza with friends</Text>
-                <Text style={styles.activitySubtitle}>Split 4 ways</Text>
+              <View className="flex-1">
+                <Text className="text-base font-semibold text-gray-900">Pizza with friends</Text>
+                <Text className="text-sm text-gray-500">Split 4 ways</Text>
               </View>
-              <Text style={styles.activityAmount}>-$12.50</Text>
+              <Text className="text-base font-bold text-red-500">-$12.50</Text>
             </View>
-            <View style={styles.activityCard}>
-              <View style={styles.activityIcon}>
+            <View className="bg-white p-4 rounded-xl mb-3 flex-row items-center border border-gray-200">
+              <View className="w-10 h-10 bg-yellow-100 rounded-full items-center justify-center mr-3">
                 <Text>☕</Text>
               </View>
-              <View style={styles.activityContent}>
-                <Text style={styles.activityTitle}>Morning coffee</Text>
-                <Text style={styles.activitySubtitle}>Today at 8:30 AM</Text>
+              <View className="flex-1">
+                <Text className="text-base font-semibold text-gray-900">Morning coffee</Text>
+                <Text className="text-sm text-gray-500">Today at 8:30 AM</Text>
               </View>
-              <Text style={styles.activityAmount}>-$4.75</Text>
+              <Text className="text-base font-bold text-red-500">-$4.75</Text>
             </View>
           </View>
 
           {/* Debug Section - Remove in production */}
-          <View style={styles.debugSection}>
-            <Text style={styles.debugTitle}>Debug - Protected Data:</Text>
-            <Text style={styles.debugContent}>
+          <View className="m-5 p-4 bg-gray-100 rounded-xl border border-gray-300">
+            <Text className="text-lg font-bold text-gray-900 mb-2">Debug - Protected Data:</Text>
+            <Text className="text-xs text-gray-700 mb-3 font-mono">
               {JSON.stringify(protectedData, null, 2)}
             </Text>
             <Pressable
               onPress={async () => {
                 try {
-                  const data = await MockProtectedApi.getProtectedData(fetchWithAuth);
+                  const data =
+                    await MockProtectedApi.getProtectedData(fetchWithAuth);
                   console.log("Protected data:", data);
                   setProtectedData(data);
                 } catch (error) {
                   console.error("Error fetching protected data:", error);
                 }
               }}
-              style={styles.debugButton}
+              className="bg-gray-600 py-2 px-4 rounded-lg"
             >
-              <Text style={styles.debugButtonText}>
-                Fetch Protected Data
-              </Text>
+              <Text className="text-white text-sm font-semibold text-center">Fetch Protected Data</Text>
             </Pressable>
           </View>
         </ScrollView>
@@ -117,187 +221,3 @@ export default function HomePage() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#EFEFEF',
-  },
-  safeArea: {
-    flex: 1,
-  },
-  header: {
-    backgroundColor: '#203627',
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 24,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-    shadowColor: '#203627',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  headerContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  headerLeft: {
-    flex: 1,
-  },
-  greeting: {
-    fontSize: 16,
-    color: '#9DC4D5',
-    marginBottom: 4,
-  },
-  userName: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#EFEFEF',
-  },
-  signOutButton: {
-    width: 44,
-    height: 44,
-    backgroundColor: 'rgba(157, 196, 213, 0.2)',
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  content: {
-    flex: 1,
-  },
-  contentContainer: {
-    paddingBottom: 20,
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
-    paddingTop: 24,
-    gap: 16,
-  },
-  statCard: {
-    flex: 1,
-    padding: 20,
-    borderRadius: 20,
-    alignItems: 'center',
-    shadowColor: '#203627',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  statCard1: {
-    backgroundColor: '#E8FF40',
-  },
-  statCard2: {
-    backgroundColor: '#9DC4D5',
-  },
-  statEmoji: {
-    fontSize: 32,
-    marginBottom: 8,
-  },
-  statLabel: {
-    fontSize: 14,
-    color: '#203627',
-    opacity: 0.7,
-    marginBottom: 4,
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#203627',
-  },
-  plaidSection: {
-    paddingHorizontal: 20,
-    paddingTop: 24,
-  },
-  activitySection: {
-    paddingHorizontal: 20,
-    paddingTop: 32,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#203627',
-    marginBottom: 16,
-  },
-  activityCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'white',
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 12,
-    shadowColor: '#203627',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  activityIcon: {
-    width: 44,
-    height: 44,
-    backgroundColor: '#EFEFEF',
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  activityContent: {
-    flex: 1,
-  },
-  activityTitle: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#203627',
-    marginBottom: 2,
-  },
-  activitySubtitle: {
-    fontSize: 14,
-    color: '#203627',
-    opacity: 0.6,
-  },
-  activityAmount: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#203627',
-  },
-  debugSection: {
-    margin: 20,
-    padding: 16,
-    backgroundColor: 'white',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#9DC4D5',
-  },
-  debugTitle: {
-    fontSize: 14,
-    color: '#203627',
-    opacity: 0.6,
-    marginBottom: 8,
-  },
-  debugContent: {
-    fontSize: 12,
-    color: '#203627',
-    opacity: 0.5,
-    backgroundColor: '#EFEFEF',
-    padding: 8,
-    borderRadius: 8,
-    fontFamily: 'monospace',
-  },
-  debugButton: {
-    backgroundColor: '#9DC4D5',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    marginTop: 12,
-    alignItems: 'center',
-  },
-  debugButtonText: {
-    color: '#203627',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-});
