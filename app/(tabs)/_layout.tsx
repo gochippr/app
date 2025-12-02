@@ -1,19 +1,31 @@
-import { PlaidProvider } from '@/context/plaid';
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import { Platform } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useAuth } from "@/context/auth";
+import { useRouter } from 'expo-router';
 
 export default function TabLayout() {
   const [tabsMounted, setTabsMounted] = useState(false);
+  const { user } = useAuth();
+  const router = useRouter();
 
   // Signal when tabs have mounted
   useEffect(() => {
     setTabsMounted(true);
   }, []);
+  
+  useEffect(() => {
+    console.log("User state changed:", user);
+    if (!user) {
+      console.log("No user found, redirecting to login");
+      router.replace('/(auth)/login');
+    }
+  }, [user]);
 
   return (
-    <PlaidProvider tabsMounted={tabsMounted}>
+    <SafeAreaProvider>
       <Tabs
         screenOptions={{
           headerShown: false,
@@ -22,7 +34,7 @@ export default function TabLayout() {
           tabBarStyle: {
             backgroundColor: 'white',
             borderTopWidth: 1,
-            borderTopColor: '#9DC4D5',
+            borderTopColor: '#FFFFFF',
             paddingBottom: Platform.OS === 'ios' ? 20 : 10,
             height: Platform.OS === 'ios' ? 88 : 68,
             shadowColor: '#203627',
@@ -38,7 +50,7 @@ export default function TabLayout() {
           tabBarLabelStyle: {
             fontSize: 12,
             fontWeight: '500',
-            marginTop: -4,
+            marginTop: 0,
           },
           tabBarIconStyle: {
             marginBottom: -4,
@@ -108,6 +120,6 @@ export default function TabLayout() {
           }}
         />
       </Tabs>
-    </PlaidProvider>
+    </SafeAreaProvider>
   );
 }
