@@ -5,7 +5,7 @@ import {
   AuthRequestConfig,
   DiscoveryDocument,
   makeRedirectUri,
-  useAuthRequest
+  useAuthRequest,
 } from "expo-auth-session";
 // Remove the router import - we'll handle navigation differently
 import * as WebBrowser from "expo-web-browser";
@@ -54,7 +54,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [accessToken, setAccessToken] = React.useState<string | null>(null);
   const [refreshToken, setRefreshToken] = React.useState<string | null>(null);
   const [request, response, promptAsync] = useAuthRequest(config, discovery);
-  
+
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<AuthError | null>(null);
   // Remove router from here - navigation will be handled by the root layout
@@ -70,64 +70,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const restoreSession = async () => {
       setIsLoading(true);
       try {
-        if (isWeb) {
-          // For web: Check if we have a session cookie by making a request to a session endpoint
-          const sessionResponse = await fetch(`${BACKEND_URL}/auth/session`, {
-            method: "GET",
-            credentials: "include", // Important: This includes cookies in the request
-          });
-
-          if (sessionResponse.ok) {
-            const userData = await sessionResponse.json();
-            setUser(userData as AuthUser);
-          } else {
-            const errorText = await sessionResponse.text();
-
-            // Try to refresh the token using the refresh cookie
-            try {
-              await refreshAccessToken();
-            } catch (e) {
-              // Silent fail on startup
-            }
-          }
-        } else {
-          // For native: Try to use the stored access token first
-          const storedAccessToken = await tokenCache?.getToken("accessToken");
-          const storedRefreshToken = await tokenCache?.getToken("refreshToken");
-
-          if (storedAccessToken) {
-            try {
-              // Check if the access token is still valid
-              const decoded = jose.decodeJwt(storedAccessToken);
-              const exp = (decoded as any).exp;
-              const now = Math.floor(Date.now() / 1000);
-
-              if (exp && exp > now) {
-                // Access token is still valid
-                setAccessToken(storedAccessToken);
-
-                if (storedRefreshToken) {
-                  setRefreshToken(storedRefreshToken);
-                }
-
-                setUser(decoded as AuthUser);
-              } else if (storedRefreshToken) {
-                // Access token expired, but we have a refresh token
-                setRefreshToken(storedRefreshToken);
-                await refreshAccessToken(storedRefreshToken);
-              }
-            } catch (e) {
-              // Try to refresh using the refresh token
-              if (storedRefreshToken) {
-                setRefreshToken(storedRefreshToken);
-                await refreshAccessToken(storedRefreshToken);
-              }
-            }
-          } else if (storedRefreshToken) {
-            // No access token, but we have a refresh token
-            setRefreshToken(storedRefreshToken);
-            await refreshAccessToken(storedRefreshToken);
-          }
+        const storedRefreshToken = await tokenCache?.getToken("refreshToken");
+        if (storedRefreshToken) {
+          setRefreshToken(storedRefreshToken);
+          await refreshTokens(storedRefreshToken);
         }
       } catch (error) {
         // Silent error handling
@@ -135,109 +81,77 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setIsLoading(false);
       }
     };
-
     restoreSession();
   }, [isWeb]);
 
-  // Function to refresh the access token
-  const refreshAccessToken = async (tokenToUse?: string) => {
-    // Prevent multiple simultaneous refresh attempts
+  const refreshTokens = React.useCallback(async (overrideToken?: string): Promise<string | null> => {
     if (refreshInProgressRef.current) {
-      return null;
+      // If a refresh is already in progress, wait for it to complete
+      return new Promise<string | null>((resolve) => {
+        const interval = setInterval(() => {
+          if (!refreshInProgressRef.current) {
+            clearInterval(interval);
+            resolve(accessToken);
+          }
+        }, 100);
+      });
     }
 
     refreshInProgressRef.current = true;
-
+    const currentRefreshToken = refreshToken || overrideToken;
+    console.log("Refreshing tokens with refresh token");
     try {
-      // Use the provided token or fall back to the state
-      const currentRefreshToken = tokenToUse || refreshToken;
-
-      if (isWeb) {
-        // For web: Use JSON for the request
-        const refreshResponse = await fetch(`${BACKEND_URL}/auth/refresh`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ platform: "web" }),
-          credentials: "include",
-        });
-
-        if (!refreshResponse.ok) {
-          // If refresh fails due to expired token, sign out
-          if (refreshResponse.status === 401) {
-            signOut();
-          }
-          return null;
-        }
-
-        // Fetch the session to get updated user data
-        const sessionResponse = await fetch(`${BACKEND_URL}/auth/session`, {
-          method: "GET",
-          credentials: "include",
-        });
-
-        if (sessionResponse.ok) {
-          const sessionData = await sessionResponse.json();
-          setUser(sessionData as AuthUser);
-        }
-
-        return null; // Web doesn't use access token directly
-      } else {
-        // For native: Use the refresh token
-        if (!currentRefreshToken) {
-          signOut();
-          return null;
-        }
-
-        const refreshResponse = await fetch(`${BACKEND_URL}/auth/refresh`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            platform: "native",
-            refreshToken: currentRefreshToken,
-          }),
-        });
-
-        if (!refreshResponse.ok) {
-          // If refresh fails due to expired token, sign out
-          if (refreshResponse.status === 401) {
-            signOut();
-          }
-          return null;
-        }
-
-        // For native: Update both tokens
-        const tokens = await refreshResponse.json();
-        const newAccessToken = tokens.accessToken;
-        const newRefreshToken = tokens.refreshToken;
-
-        if (newAccessToken) setAccessToken(newAccessToken);
-        if (newRefreshToken) setRefreshToken(newRefreshToken);
-
-        // Save both tokens to cache
-        if (newAccessToken)
-          await tokenCache?.saveToken("accessToken", newAccessToken);
-        if (newRefreshToken)
-          await tokenCache?.saveToken("refreshToken", newRefreshToken);
-
-        // Update user data from the new access token
-        if (newAccessToken) {
-          const decoded = jose.decodeJwt(newAccessToken);
-          setUser(decoded as AuthUser);
-        }
-
-        return newAccessToken; // Return the new access token
+      if (!currentRefreshToken) {
+        console.log("No refresh token available, cannot refresh.");
+        signOut();
+        return null;
       }
+
+      const refreshResponse = await fetch(`${BACKEND_URL}/auth/refresh`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          platform: "native",
+          refreshToken: currentRefreshToken,
+        }),
+      });
+
+      if (!refreshResponse.ok) {
+        signOut();
+        return null;
+      }
+
+      // Refresh the tokens in state and cache
+      const tokens = await refreshResponse.json();
+      const newAccessToken = tokens.accessToken;
+      const newRefreshToken = tokens.refreshToken;
+
+      if (newAccessToken) setAccessToken(newAccessToken);
+      if (newRefreshToken) setRefreshToken(newRefreshToken);
+
+      // Save both tokens to cache
+      if (newAccessToken)
+        await tokenCache?.saveToken("accessToken", newAccessToken);
+      if (newRefreshToken)
+        await tokenCache?.saveToken("refreshToken", newRefreshToken);
+
+      // Update user data from the new access token
+      if (newAccessToken) {
+        const decoded = jose.decodeJwt(newAccessToken);
+        setUser(decoded as AuthUser);
+      }
+
+      return newAccessToken; // Return the new access token
     } catch (error) {
+      console.error("Error refreshing token:", error);
       signOut();
-      return null;
     } finally {
       refreshInProgressRef.current = false;
     }
-  };
+    return null;
+  }, [refreshToken]);
 
   const handleNativeTokens = async (tokens: {
     accessToken: string;
@@ -306,24 +220,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           // For web: The server sets the tokens in HTTP-only cookies
           // We just need to get the user data from the response
           const userData = await tokenResponse.json();
-          
+
           if (userData.success) {
             // Fetch the session to get user data
             // This ensures we have the most up-to-date user information
-            const sessionResponse = await fetch(
-              `${BACKEND_URL}/auth/session`,
-              {
-                method: "GET",
-                credentials: "include",
-              }
-            );
+            const sessionResponse = await fetch(`${BACKEND_URL}/auth/session`, {
+              method: "GET",
+              credentials: "include",
+            });
 
             if (sessionResponse.ok) {
               const sessionData = await sessionResponse.json();
               setUser(sessionData as AuthUser);
-              
+
               // Force a small delay to ensure state is updated before any API calls
-              await new Promise(resolve => setTimeout(resolve, 100));
+              await new Promise((resolve) => setTimeout(resolve, 100));
             }
           }
         } else {
@@ -345,58 +256,37 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   const fetchWithAuth = async (url: string, options: RequestInit) => {
-    if (isWeb) {
-      // For web: Include credentials to send cookies
-      const response = await fetch(url, {
-        ...options,
-        credentials: "include",
-      });
+    // For native: Use token in Authorization header
+    const headers = {
+      ...options.headers,
+      Authorization: `Bearer ${accessToken}`,
+    };
+    const response = await fetch(url, {
+      ...options,
+      headers: headers,
+      credentials: "include",
+    });
 
-      // If the response indicates an authentication error, try to refresh the token
-      if (response.status === 401) {
-        // Try to refresh the token
-        const refreshResult = await refreshAccessToken();
+    // If the response indicates an authentication error, try to refresh the token
+    if (response.status === 401) {
+      // Try to refresh the token and get the new token directly
+      const newAccessToken = await refreshTokens();
 
-        // If we still have a user after refresh, retry the request
-        if (user) {
-          return fetch(url, {
-            ...options,
-            credentials: "include",
-          });
-        } else {
-          // Don't navigate here - let the root layout handle it
-          return response; // Return the original response
-        }
+      if (user) {
+        // Retry the original request with the new token
+        const retryHeaders = {
+          ...options.headers,
+          Authorization: `Bearer ${newAccessToken}`,
+        };
+        return await fetch(url, {
+          ...options,
+          headers: retryHeaders,
+          credentials: "include",
+        });
       }
-
-      return response;
-    } else {
-      // For native: Use token in Authorization header
-      const headers = { ...options.headers, Authorization: `Bearer ${accessToken}` };
-      const response = await fetch(url, {
-        ...options,
-        headers: headers,
-      });
-
-      // If the response indicates an authentication error, try to refresh the token
-      if (response.status === 401) {
-        // Try to refresh the token and get the new token directly
-        const newToken = await refreshAccessToken();
-
-        // If we got a new token, retry the request with it
-        if (newToken) {
-          return fetch(url, {
-            ...options,
-            headers: {
-              ...options.headers,
-              Authorization: `Bearer ${newToken}`,
-            },
-          });
-        }
-      }
-
-      return response;
     }
+
+    return response;
   };
 
   const signIn = async () => {
@@ -412,21 +302,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signOut = async () => {
-    if (isWeb) {
-      // For web: Call logout endpoint to clear the cookie
-      try {
-        await fetch(`${BACKEND_URL}/auth/logout`, {
-          method: "POST",
-          credentials: "include",
-        });
-      } catch (error) {
-        console.error("Error during web logout:", error);
-      }
-    } else {
-      // For native: Clear both tokens from cache
-      await tokenCache?.deleteToken("accessToken");
-      await tokenCache?.deleteToken("refreshToken");
-    }
+    // For native: Clear both tokens from cache
+    await tokenCache?.deleteToken("accessToken");
+    await tokenCache?.deleteToken("refreshToken");
 
     // Clear state
     setUser(null);
