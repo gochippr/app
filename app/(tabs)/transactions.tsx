@@ -36,12 +36,14 @@ export default function TransactionsPage() {
 
   return (
     <LoadingLayout isLoading={loading}>
-      <View>
-        <Text className="text-2xl font-bold mb-4">Transactions</Text>
+      <View className="w-full h-full px-4 pt-8 pb-1 flex-col items-center">
+          <Text className="w-full text-3xl font-bold text-[#253628] mb-4">
+            Transactions
+          </Text>
+        <ScrollView className="h-full w-full" showsVerticalScrollIndicator={false}>
+          <TransactionsList transactions={transactions} />
+        </ScrollView>
       </View>
-      <ScrollView className="h-full w-full p-4">
-        <TransactionsList transactions={transactions} />
-      </ScrollView>
     </LoadingLayout>
   );
 }
