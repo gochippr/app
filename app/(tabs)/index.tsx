@@ -11,10 +11,11 @@ import {
   getTransactionSummary,
   TransactionSummaryResponse,
 } from "@/services/transactionService";
+import { BudgetRunBoard } from "@/features/budgetRun";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Pressable, Text, View, ScrollView } from "react-native";
 import { syncAccounts } from "@/services/accountService";
 
 export default function HomePage() {
@@ -79,9 +80,13 @@ export default function HomePage() {
 
   return (
     <LoadingLayout isLoading={loading}>
-      <View className="w-full h-full px-4 py-8 flex-col items-center justify-between">
+      <ScrollView 
+        className="w-full h-full" 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 24 }}
+      >
         {/* Header */}
-        <View className="w-full flex-row justify-between items-center">
+        <View className="w-full flex-row justify-between items-center px-4 pt-8 pb-4">
           <View className="flex-col justify-center items-start">
             <Text className="text-3xl font-bold text-[#253628]">
               Good morning!
@@ -91,12 +96,22 @@ export default function HomePage() {
             </Text>
           </View>
           <Pressable onPress={handleSignOut}>
-            <Ionicons name="log-out-outline" size={24} />
+            <Ionicons name="log-out-outline" size={24} color="#203627" />
           </Pressable>
         </View>
-        <MonthlyBudget transactionSummary={transactionSummary} userBalance={userBalance} />
-        <SpendingInsights transactionSummary={transactionSummary} />
-      </View>
+        
+        {/* Daily Budget Run - Primary Feature */}
+        <BudgetRunBoard />
+        
+        {/* Financial Overview */}
+        <View className="px-4 mt-4">
+          <MonthlyBudget transactionSummary={transactionSummary} userBalance={userBalance} />
+        </View>
+        
+        <View className="px-4 mt-4">
+          <SpendingInsights transactionSummary={transactionSummary} />
+        </View>
+      </ScrollView>
     </LoadingLayout>
   );
 }

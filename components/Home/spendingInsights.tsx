@@ -69,24 +69,23 @@ export function SpendingInsights({
         <Ionicons name="time-outline" size={20} color="#9ca3af" />
       </View>
 
-      <View className="items-center justify-center">
-        <View className="relative">
-          <Svg
-            width={240}
-            height={240}
-            style={{ transform: [{ rotate: "-90deg" }] }}
-          >
-            <Circle
-              cx={120}
-              cy={120}
-              r={RADIUS}
-              fill="none"
-              stroke="#f3f4f6"
-              strokeWidth={STROKE_WIDTH}
-            />
-
-            {hasData ? (
-              segments.map((segment, index) => (
+      {hasData ? (
+        <View className="items-center justify-center">
+          <View className="relative">
+            <Svg
+              width={240}
+              height={240}
+              style={{ transform: [{ rotate: "-90deg" }] }}
+            >
+              <Circle
+                cx={120}
+                cy={120}
+                r={RADIUS}
+                fill="none"
+                stroke="#f3f4f6"
+                strokeWidth={STROKE_WIDTH}
+              />
+              {segments.map((segment, index) => (
                 <Circle
                   key={`${segment.category}-${index}`}
                   cx={120}
@@ -98,28 +97,26 @@ export function SpendingInsights({
                   strokeDasharray={`${segment.dashLength} ${CIRCUMFERENCE}`}
                   strokeDashoffset={segment.dashOffset}
                 />
-              ))
-            ) : (
-              <Circle
-                cx={120}
-                cy={120}
-                r={RADIUS}
-                fill="none"
-                stroke="#e5e7eb"
-                strokeWidth={STROKE_WIDTH}
-              />
-            )}
-          </Svg>
-          <View className="absolute inset-0 items-center justify-center">
-            <View className="items-center">
-              <Text className="text-md font-semibold text-gray-500">Total</Text>
-              <Text className="text-xl font-bold text-gray-900">
-                {formatCurrency(totalSpent)}
-              </Text>
+              ))}
+            </Svg>
+            <View className="absolute inset-0 items-center justify-center">
+              <View className="items-center">
+                <Text className="text-md font-semibold text-gray-500">Total</Text>
+                <Text className="text-xl font-bold text-gray-900">
+                  {formatCurrency(totalSpent)}
+                </Text>
+              </View>
             </View>
           </View>
         </View>
-      </View>
+      ) : (
+        <View className="py-8 items-center">
+          <Text className="text-4xl mb-2">📊</Text>
+          <Text className="text-gray-500 text-center">
+            No spending data yet
+          </Text>
+        </View>
+      )}
 
       <View className="w-full flex-col gap-3">
         {hasData ? (
