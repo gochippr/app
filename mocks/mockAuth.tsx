@@ -6,8 +6,15 @@
  */
 
 import * as React from "react";
-import { mockUser } from "./data";
+import { mockUser, mockAccounts, mockTransactions, mockTransactionSummary } from "./data";
 import { simulateDelay } from "./config";
+import { 
+  initializeMockState, 
+  getLinkedAccounts, 
+  getUserBalanceSummary,
+  getAdditionalTransactions,
+  getAllAccountBalances
+} from "./mockState";
 import type { AuthUser } from "@/context/auth";
 import { AuthError } from "expo-auth-session";
 
@@ -26,6 +33,11 @@ export const MockAuthProvider = ({ children }: { children: React.ReactNode }) =>
   const [isLoading, setIsLoading] = React.useState(false);
   const [error] = React.useState<AuthError | null>(null);
 
+  // Initialize mock state with default accounts
+  React.useEffect(() => {
+    initializeMockState(mockAccounts);
+  }, []);
+
   // Mock fetchWithAuth that intercepts API calls and returns mock data
   const fetchWithAuth = React.useCallback(async (url: string, options: RequestInit): Promise<Response> => {
     await simulateDelay();
@@ -38,19 +50,31 @@ export const MockAuthProvider = ({ children }: { children: React.ReactNode }) =>
     
     // Handle different API endpoints
     if (urlPath.includes("/transactions/summary")) {
-      return createMockResponse(mockData.mockTransactionSummary);
+      // Calculate updated summary based on all transactions including new ones
+      const additionalTxns = getAdditionalTransactions();
+      const additionalSpent = additionalTxns.reduce((sum, t) => sum + t.amount, 0);
+      const updatedSummary = {
+        ...mockTransactionSummary,
+        total_spent: mockTransactionSummary.total_spent + additionalSpent,
+      };
+      return createMockResponse(updatedSummary);
     }
     
     if (urlPath.includes("/transactions")) {
-      return createMockResponse({ transactions: mockData.mockTransactions });
+      // Combine original transactions with new ones from linked accounts
+      const additionalTxns = getAdditionalTransactions();
+      const allTransactions = [...additionalTxns, ...mockTransactions];
+      return createMockResponse({ transactions: allTransactions });
     }
     
     if (urlPath.includes("/accounts/balance")) {
-      return createMockResponse(mockData.mockUserBalance);
+      // Get dynamic balance from mock state
+      return createMockResponse(getUserBalanceSummary());
     }
     
     if (urlPath.includes("/accounts")) {
-      return createMockResponse({ accounts: mockData.mockAccounts });
+      // Get dynamic accounts from mock state (includes newly linked accounts)
+      return createMockResponse({ accounts: getLinkedAccounts() });
     }
     
     if (urlPath.includes("/friends/requests")) {
@@ -126,7 +150,15 @@ export const MockAuthProvider = ({ children }: { children: React.ReactNode }) =>
     }
     
     if (urlPath.includes("/users/accounts")) {
-      return createMockResponse(mockData.mockUserAccounts);
+      // Return dynamic accounts and balances
+      const accounts = getLinkedAccounts();
+      const balances = getAllAccountBalances();
+      return createMockResponse({
+        accounts,
+        balances,
+        total_accounts: accounts.length,
+        ingestion_started: true,
+      });
     }
     
     if (urlPath.includes("/users/me") && options.method === "DELETE") {

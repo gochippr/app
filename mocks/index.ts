@@ -7,4 +7,5 @@
 export { USE_MOCK_DATA, MOCK_DELAY, simulateDelay } from "./config";
 export { MockAuthProvider, useMockAuth } from "./mockAuth";
 export * from "./data";
+export * from "./mockState";
 

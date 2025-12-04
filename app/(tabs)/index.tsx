@@ -77,6 +77,10 @@ export default function HomePage() {
     }
   };
 
+  const handleLinkAccount = () => {
+    router.push("/(tabs)/plaid-link");
+  };
+
   return (
     <LoadingLayout isLoading={loading}>
       <View className="w-full h-full px-4 py-8 flex-col items-center justify-between">
@@ -90,9 +94,18 @@ export default function HomePage() {
               Here's your financial overview
             </Text>
           </View>
-          <Pressable onPress={handleSignOut}>
-            <Ionicons name="log-out-outline" size={24} />
-          </Pressable>
+          <View className="flex-row items-center gap-2">
+            <Pressable 
+              onPress={handleLinkAccount}
+              className="bg-[#E8FF40] px-3 py-2 rounded-xl flex-row items-center gap-1"
+            >
+              <Ionicons name="wallet-outline" size={18} color="#203627" />
+              <Text className="text-sm font-semibold text-[#203627]">Add Bank</Text>
+            </Pressable>
+            <Pressable onPress={handleSignOut} className="p-2">
+              <Ionicons name="log-out-outline" size={22} color="#203627" />
+            </Pressable>
+          </View>
         </View>
         <MonthlyBudget transactionSummary={transactionSummary} userBalance={userBalance} />
         <SpendingInsights transactionSummary={transactionSummary} />

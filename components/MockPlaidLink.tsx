@@ -8,6 +8,7 @@
 import React, { useState } from 'react';
 import { Pressable, Text, View, Modal, ScrollView } from 'react-native';
 import { simulateDelay } from '@/mocks/config';
+import { linkNewAccount } from '@/mocks/mockState';
 
 interface MockPlaidLinkProps {
   fetchWithAuth: (url: string, options: RequestInit) => Promise<Response>;
@@ -34,8 +35,10 @@ export default function MockPlaidLink({
   const [modalVisible, setModalVisible] = useState(false);
   const [isLinking, setIsLinking] = useState(false);
   const [linkStep, setLinkStep] = useState<'select' | 'credentials' | 'connecting'>('select');
+  const [selectedBank, setSelectedBank] = useState<string | null>(null);
 
   const handleBankSelect = async (bank: typeof MOCK_BANKS[0]) => {
+    setSelectedBank(bank.name);
     setLinkStep('credentials');
     
     // Simulate entering credentials
@@ -45,11 +48,16 @@ export default function MockPlaidLink({
     // Simulate connection process
     setIsLinking(true);
     await simulateDelay();
+    
+    // Link the new account in mock state
+    linkNewAccount(bank.name);
+    
     await simulateDelay();
     
     setIsLinking(false);
     setModalVisible(false);
     setLinkStep('select');
+    setSelectedBank(null);
     onSuccess();
   };
 
