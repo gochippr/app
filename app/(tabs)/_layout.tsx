@@ -86,6 +86,20 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen
+          name="ai"
+          options={{
+            title: 'AI',
+            tabBarIcon: ({ focused }) => (
+              <Ionicons 
+                name="sparkles" 
+                size={22} 
+                color="#203627" 
+                style={{ opacity: focused ? 1 : 0.5 }}
+              />
+            ),
+          }}
+        />
+        <Tabs.Screen
           name="split-settle"
           options={{
             title: 'Split',

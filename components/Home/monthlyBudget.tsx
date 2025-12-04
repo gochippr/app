@@ -22,7 +22,7 @@ export function MonthlyBudget(props: MonthlyBudgetProps) {
         </Text>
         <Text className="text-lg font-bold text-white">
           {" "}
-          ${transactionSummary?.total_spent} / $2000
+          ${Math.round(transactionSummary?.total_spent)} / $2000
         </Text>
       </View>
       <View className="w-full">
