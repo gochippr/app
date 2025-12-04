@@ -1,10 +1,10 @@
 import LoadingLayout from "@/components/LoadingLayout";
-import PlaidLinkComponent from "@/components/PlaidLink";
+import PlaidConnectWrapper from "@/components/PlaidConnectWrapper";
 import { useAuth } from "@/context/auth";
 import { syncAccounts } from "@/services/accountService";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
-import { SafeAreaView, View } from "react-native";
+import { View } from "react-native";
 
 export default function PlaidLinkPage() {
   const [loading, setLoading] = useState(false);
@@ -52,7 +52,7 @@ export default function PlaidLinkPage() {
       <View style={{ flex: 1, backgroundColor: "#EFEFEF" }}>
         <View style={{ flex: 1 }}>
           {/* Plaid Link Component */}
-          <PlaidLinkComponent
+          <PlaidConnectWrapper
             fetchWithAuth={fetchWithAuth}
             onSuccess={handleSuccess}
             onError={handleError}

@@ -17,7 +17,7 @@ import {
   getFriendSplitSummaries,
 } from "@/services/splitService";
 
-const formatCurrency = (value: number) => `$${value.toFixed(2)}`;
+const formatCurrency = (value: number | undefined | null) => `$${(value ?? 0).toFixed(2)}`;
 
 export default function SplitSettleHome() {
   const router = useRouter();

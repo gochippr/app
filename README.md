@@ -2,6 +2,30 @@
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
+## Environment Variables
+
+Create a `.env` file in the root directory with the following variables:
+
+```bash
+# Backend Configuration
+# URL of the backend API server
+BACKEND_URL=http://localhost:8000
+
+# Mock Data Configuration
+# Set to "true" to use mock data (no backend required)
+# Set to "false" or remove to use real backend
+USE_MOCK_DATA=true
+```
+
+### Mock Mode
+
+When `USE_MOCK_DATA=true`, the app runs with sample data and doesn't require a backend server. This is useful for:
+- Frontend development without backend dependencies
+- UI testing and demos
+- Offline development
+
+To switch to real backend, set `USE_MOCK_DATA=false` or edit `mocks/config.ts` directly.
+
 ## Get started
 
 1. Install dependencies

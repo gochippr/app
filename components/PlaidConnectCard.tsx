@@ -1,11 +1,9 @@
-import { usePlaid } from "@/context/plaid";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React from "react";
 import { Pressable, Text, View } from "react-native";
 
 export default function PlaidConnectCard() {
   const router = useRouter();
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleConnectAccount = () => {
     router.push("/(tabs)/plaid-link");

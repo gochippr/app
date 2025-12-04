@@ -1,5 +1,7 @@
 import { tokenCache } from "@/utils/cache";
 import { BACKEND_URL } from "@/utils/constants";
+import { USE_MOCK_DATA } from "@/mocks/config";
+import { MockAuthProvider, useMockAuth } from "@/mocks/mockAuth";
 import {
   AuthError,
   AuthRequestConfig,
@@ -328,10 +330,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-export const useAuth = () => {
+// Real auth hook (internal use)
+const useRealAuth = () => {
   const context = React.useContext(AuthContext);
   if (!context) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
+};
+
+// Export a unified auth hook that works with both mock and real providers
+export const useAuth = () => {
+  if (USE_MOCK_DATA) {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    return useMockAuth();
+  }
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  return useRealAuth();
+};
+
+// Wrapper component that decides which provider to use
+export const AuthProviderWrapper = ({ children }: { children: React.ReactNode }) => {
+  if (USE_MOCK_DATA) {
+    return <MockAuthProvider>{children}</MockAuthProvider>;
+  }
+  return <AuthProvider>{children}</AuthProvider>;
 };

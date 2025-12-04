@@ -1,4 +1,4 @@
-import { AuthProvider, useAuth } from "@/context/auth";
+import { AuthProviderWrapper, useAuth } from "@/context/auth";
 import { Stack } from "expo-router";
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from "react";
@@ -10,9 +10,9 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
+    <AuthProviderWrapper>
       <AuthInitializer />
-    </AuthProvider>
+    </AuthProviderWrapper>
   );
 }
 
