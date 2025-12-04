@@ -12,18 +12,20 @@ import {
   TransactionSummaryResponse,
 } from "@/services/transactionService";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, Text, View } from "react-native";
+import { syncAccounts } from "@/services/accountService";
 
 export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [transactionSummary, setTransactionSummary] =
     useState<TransactionSummaryResponse | null>(null);
   const [userBalance, setUserBalance] = useState<UserBalance | null>(null);
-
+  
   const { user, signOut, fetchWithAuth } = useAuth();
   const router = useRouter();
+  const { refresh } = useLocalSearchParams();
 
   const loadTransactionSummary = async () => {
     if (!fetchWithAuth) return;
@@ -64,7 +66,7 @@ export default function HomePage() {
 
   useEffect(() => {
     init();
-  }, []);
+  }, [refresh]);
 
   const handleSignOut = async () => {
     try {

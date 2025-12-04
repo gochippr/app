@@ -1,11 +1,14 @@
+import LoadingLayout from "@/components/LoadingLayout";
 import PlaidLinkComponent from "@/components/PlaidLink";
 import { useAuth } from "@/context/auth";
-import { Ionicons } from "@expo/vector-icons";
+import { syncAccounts } from "@/services/accountService";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React from "react";
-import { Pressable, SafeAreaView, Text, View } from "react-native";
+import React, { useState } from "react";
+import { SafeAreaView, View } from "react-native";
 
 export default function PlaidLinkPage() {
+  const [loading, setLoading] = useState(false);
+
   const router = useRouter();
   const { fetchWithAuth } = useAuth();
   const params = useLocalSearchParams();
@@ -14,8 +17,22 @@ export default function PlaidLinkPage() {
   const institutionId = params.institutionId as string;
   const institutionName = params.institutionName as string;
 
-  const handleSuccess = () => {
-    router.replace("/(tabs)");
+  const handleSuccess = async () => {
+    if (!fetchWithAuth) return;
+    // After successfully linking an account, sync accounts and navigate to the main page
+    setLoading(true);
+
+    try {
+      await syncAccounts(fetchWithAuth);
+    } catch (error) {
+      //
+    } finally {
+      setLoading(false);
+    }
+    router.replace({
+      pathname: "/(tabs)",
+      params: { refresh: Date.now().toString() },
+    });
   };
 
   const handleError = (error: string) => {
@@ -27,19 +44,22 @@ export default function PlaidLinkPage() {
     router.back();
   };
 
-  return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#EFEFEF" }}>
-      <View style={{ flex: 1 }}>
+  if (loading) {
+    return <LoadingLayout isLoading={loading} />;
+  }
 
-        {/* Plaid Link Component */}
-        <PlaidLinkComponent
-          fetchWithAuth={fetchWithAuth}
-          onSuccess={handleSuccess}
-          onError={handleError}
-          relinkMode={isRelinkMode}
-          relinkInstitutionId={institutionId}
-        />
+  return (
+      <View style={{ flex: 1, backgroundColor: "#EFEFEF" }}>
+        <View style={{ flex: 1 }}>
+          {/* Plaid Link Component */}
+          <PlaidLinkComponent
+            fetchWithAuth={fetchWithAuth}
+            onSuccess={handleSuccess}
+            onError={handleError}
+            relinkMode={isRelinkMode}
+            relinkInstitutionId={institutionId}
+          />
+        </View>
       </View>
-    </SafeAreaView>
   );
 }

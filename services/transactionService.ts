@@ -15,6 +15,9 @@ export interface Transaction {
   pending: boolean;
   original_payer_user_id?: string;
   created_at: string; // ISO date string
+  split_total?: number;
+  user_amount?: number;
+  has_split?: boolean;
 }
 
 export interface TransactionCategorySummary {
@@ -42,8 +45,7 @@ export async function getTransactions(
   }
   const data = await response.json();
 
-  console.log("Transactions data:", data); // Debug log
-  return data["transactions"]
+  return data["transactions"];
 }
 
 export async function getTransactionSummary(
