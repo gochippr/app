@@ -37,6 +37,7 @@ import Animated, {
 interface BudgetRunBoardProps {
   expanded?: boolean;
   onPress?: () => void;
+  gameData?: GameBoardResponse | null;
 }
 
 // Map day names from API to display labels
@@ -50,7 +51,7 @@ const DAY_NAME_MAP: Record<string, string> = {
   'sat': 'S',
 };
 
-export default function BudgetRunBoard({ expanded = false, onPress }: BudgetRunBoardProps) {
+export default function BudgetRunBoard({ expanded = false, onPress, gameData: propGameData }: BudgetRunBoardProps) {
   const router = useRouter();
   const { fetchWithAuth } = useAuth();
   const { width: screenWidth } = useWindowDimensions();
@@ -60,38 +61,44 @@ export default function BudgetRunBoard({ expanded = false, onPress }: BudgetRunB
   const contentPadding = 16 * 2;   // p-4 = 16px each side
   const progressBarWidth = screenWidth - containerPadding - contentPadding;
   
-  const [loading, setLoading] = useState(true);
-  const [gameData, setGameData] = useState<GameBoardResponse | null>(null);
+  // Use prop data if provided, otherwise fetch internally
+  const [internalGameData, setInternalGameData] = useState<GameBoardResponse | null>(null);
+  const [loading, setLoading] = useState(propGameData === undefined);
   const [error, setError] = useState<string | null>(null);
   const [checkingChallenge, setCheckingChallenge] = useState(false);
   const [showBadgeModal, setShowBadgeModal] = useState(false);
   const [unlockedBadge, setUnlockedBadge] = useState<BadgeInfo | null>(null);
   const [celebrationMessage, setCelebrationMessage] = useState<string | null>(null);
   
+  // Use prop data if provided, otherwise use internal state
+  const gameData = propGameData !== undefined ? propGameData : internalGameData;
+  
   // Animation values
   const avatarBounce = useSharedValue(0);
   const streakPulse = useSharedValue(1);
   const progressGlow = useSharedValue(0.5);
   
-  // Load game data
+  // Load game data (only if not provided via props)
   const loadGameData = useCallback(async () => {
-    if (!fetchWithAuth) return;
+    if (!fetchWithAuth || propGameData !== undefined) return;
     
     try {
       setError(null);
       const data = await getBudgetRunStatus(fetchWithAuth);
-      setGameData(data);
+      setInternalGameData(data);
     } catch (err) {
       console.error('Error loading budget run:', err);
       setError('Unable to load Budget Run');
     } finally {
       setLoading(false);
     }
-  }, [fetchWithAuth]);
+  }, [fetchWithAuth, propGameData]);
   
   useEffect(() => {
-    loadGameData();
-  }, [loadGameData]);
+    if (propGameData === undefined) {
+      loadGameData();
+    }
+  }, [loadGameData, propGameData]);
   
   // Initialize animations (only run once on mount)
   useEffect(() => {

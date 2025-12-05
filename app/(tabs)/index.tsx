@@ -2,27 +2,31 @@ import { MonthlyBudget } from "@/components/Home/monthlyBudget";
 import { SpendingInsights } from "@/components/Home/spendingInsights";
 import LoadingLayout from "@/components/LoadingLayout";
 import { useAuth } from "@/context/auth";
+import { BudgetRunBoard } from "@/features/budgetRun";
 import {
   getAccounts,
   getUserBalance,
   UserBalance,
 } from "@/services/accountService";
 import {
+  GameBoardResponse,
+  getBudgetRunStatus,
+} from "@/services/budgetRunService";
+import {
   getTransactionSummary,
   TransactionSummaryResponse,
 } from "@/services/transactionService";
-import { BudgetRunBoard } from "@/features/budgetRun";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
 import { Pressable, Text, View, ScrollView } from "react-native";
-import { syncAccounts } from "@/services/accountService";
 
 export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [transactionSummary, setTransactionSummary] =
     useState<TransactionSummaryResponse | null>(null);
   const [userBalance, setUserBalance] = useState<UserBalance | null>(null);
+  const [budgetRunData, setBudgetRunData] = useState<GameBoardResponse | null>(null);
   
   const { user, signOut, fetchWithAuth } = useAuth();
   const router = useRouter();
@@ -48,6 +52,16 @@ export default function HomePage() {
     }
   };
 
+  const loadBudgetRunData = async () => {
+    if (!fetchWithAuth) return;
+    try {
+      const data = await getBudgetRunStatus(fetchWithAuth);
+      setBudgetRunData(data);
+    } catch (error) {
+      console.error("Error fetching budget run data:", error);
+    }
+  };
+
   const init = async () => {
     if (!fetchWithAuth) return;
     setLoading(true);
@@ -59,7 +73,11 @@ export default function HomePage() {
         router.push("/(tabs)/plaid-link");
       }
 
-      await Promise.all([loadTransactionSummary(), loadUserBalance()]);
+      await Promise.all([
+        loadTransactionSummary(),
+        loadUserBalance(),
+        loadBudgetRunData(),
+      ]);
     } finally {
       setLoading(false);
     }
@@ -101,7 +119,7 @@ export default function HomePage() {
         </View>
         
         {/* Daily Budget Run - Primary Feature */}
-        <BudgetRunBoard />
+        <BudgetRunBoard gameData={budgetRunData} />
         
         {/* Financial Overview */}
         <View className="px-4 mt-4">

@@ -101,7 +101,7 @@ export default function BudgetRunScreen() {
         </View>
         
         {/* Game Board */}
-        <BudgetRunBoard expanded />
+        <BudgetRunBoard expanded gameData={gameData} />
         
         {/* Stats Cards */}
         {gameData && (
