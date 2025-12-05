@@ -2,11 +2,16 @@ import { MonthlyBudget } from "@/components/Home/monthlyBudget";
 import { SpendingInsights } from "@/components/Home/spendingInsights";
 import LoadingLayout from "@/components/LoadingLayout";
 import { useAuth } from "@/context/auth";
+import { BudgetRunBoard } from "@/features/budgetRun";
 import {
   getAccounts,
   getUserBalance,
   UserBalance,
 } from "@/services/accountService";
+import {
+  GameBoardResponse,
+  getBudgetRunStatus,
+} from "@/services/budgetRunService";
 import {
   getTransactionSummary,
   TransactionSummaryResponse,
@@ -14,14 +19,14 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { Pressable, Text, View } from "react-native";
-import { syncAccounts } from "@/services/accountService";
+import { Pressable, Text, View, ScrollView } from "react-native";
 
 export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [transactionSummary, setTransactionSummary] =
     useState<TransactionSummaryResponse | null>(null);
   const [userBalance, setUserBalance] = useState<UserBalance | null>(null);
+  const [budgetRunData, setBudgetRunData] = useState<GameBoardResponse | null>(null);
   
   const { user, signOut, fetchWithAuth } = useAuth();
   const router = useRouter();
@@ -47,6 +52,16 @@ export default function HomePage() {
     }
   };
 
+  const loadBudgetRunData = async () => {
+    if (!fetchWithAuth) return;
+    try {
+      const data = await getBudgetRunStatus(fetchWithAuth);
+      setBudgetRunData(data);
+    } catch (error) {
+      console.error("Error fetching budget run data:", error);
+    }
+  };
+
   const init = async () => {
     if (!fetchWithAuth) return;
     setLoading(true);
@@ -58,7 +73,11 @@ export default function HomePage() {
         router.push("/(tabs)/plaid-link");
       }
 
-      await Promise.all([loadTransactionSummary(), loadUserBalance()]);
+      await Promise.all([
+        loadTransactionSummary(),
+        loadUserBalance(),
+        loadBudgetRunData(),
+      ]);
     } finally {
       setLoading(false);
     }
@@ -79,9 +98,13 @@ export default function HomePage() {
 
   return (
     <LoadingLayout isLoading={loading}>
-      <View className="w-full h-full px-4 py-8 flex-col items-center justify-between">
+      <ScrollView 
+        className="w-full h-full" 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 24 }}
+      >
         {/* Header */}
-        <View className="w-full flex-row justify-between items-center">
+        <View className="w-full flex-row justify-between items-center px-4 pt-8 pb-4">
           <View className="flex-col justify-center items-start">
             <Text className="text-3xl font-bold text-[#253628]">
               Good morning!
@@ -91,12 +114,22 @@ export default function HomePage() {
             </Text>
           </View>
           <Pressable onPress={handleSignOut}>
-            <Ionicons name="log-out-outline" size={24} />
+            <Ionicons name="log-out-outline" size={24} color="#203627" />
           </Pressable>
         </View>
-        <MonthlyBudget transactionSummary={transactionSummary} userBalance={userBalance} />
-        <SpendingInsights transactionSummary={transactionSummary} />
-      </View>
+        
+        {/* Daily Budget Run - Primary Feature */}
+        <BudgetRunBoard gameData={budgetRunData} />
+        
+        {/* Financial Overview */}
+        <View className="px-4 mt-4">
+          <MonthlyBudget transactionSummary={transactionSummary} userBalance={userBalance} />
+        </View>
+        
+        <View className="px-4 mt-4">
+          <SpendingInsights transactionSummary={transactionSummary} />
+        </View>
+      </ScrollView>
     </LoadingLayout>
   );
 }

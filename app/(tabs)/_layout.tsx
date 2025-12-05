@@ -1,10 +1,9 @@
+import { useAuth } from "@/context/auth";
 import { Ionicons } from '@expo/vector-icons';
-import { Tabs } from 'expo-router';
-import { use, useEffect, useState } from 'react';
+import { Tabs, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { useAuth } from "@/context/auth";
-import { useRouter } from 'expo-router';
 
 export default function TabLayout() {
   const [tabsMounted, setTabsMounted] = useState(false);
@@ -74,7 +73,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="transactions"
           options={{
-            title: 'Transactions',
+            title: 'Activity',
             tabBarIcon: ({ focused }) => (
               <Ionicons 
                 name="card" 
@@ -131,6 +130,12 @@ export default function TabLayout() {
           name="plaid-link"
           options={{
             href: null, // Hide from tab bar
+          }}
+        />
+        <Tabs.Screen
+          name="budget-run"
+          options={{
+            href: null, // Hide from tab bar - accessible via home screen
           }}
         />
       </Tabs>
