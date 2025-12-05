@@ -427,6 +427,26 @@ export default function ProfilePage() {
 
           {/* Menu Items */}
           <View style={styles.menuSection}>
+            <Pressable 
+              style={styles.menuItem}
+              onPress={() => router.push("/(tabs)/plaid-link")}
+            >
+              <View style={[styles.menuIcon, { backgroundColor: "#B8E8C8" }]}>
+                <Ionicons
+                  name="add-circle-outline"
+                  size={20}
+                  color="#203627"
+                />
+              </View>
+              <Text style={styles.menuText}>Add Bank Account</Text>
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color="#203627"
+                style={{ opacity: 0.3 }}
+              />
+            </Pressable>
+
             <Pressable style={styles.menuItem}>
               <View style={[styles.menuIcon, { backgroundColor: "#E8FF40" }]}>
                 <Ionicons

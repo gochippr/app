@@ -129,6 +129,32 @@ export default function HomePage() {
         <View className="px-4 mt-4">
           <SpendingInsights transactionSummary={transactionSummary} />
         </View>
+
+        {/* Quick Action - Add Bank Account */}
+        <Pressable 
+          className="mx-4 mt-4 bg-white rounded-2xl p-4 flex-row items-center"
+          style={{
+            shadowColor: "#203627",
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.06,
+            shadowRadius: 12,
+            elevation: 2,
+          }}
+          onPress={() => router.push("/(tabs)/plaid-link")}
+        >
+          <View className="w-12 h-12 rounded-full bg-[#E8FF40] items-center justify-center mr-4">
+            <Ionicons name="wallet-outline" size={22} color="#203627" />
+          </View>
+          <View className="flex-1">
+            <Text className="text-base font-semibold text-[#203627]">
+              Link another account
+            </Text>
+            <Text className="text-sm text-[#6C7280]">
+              Connect more banks for a complete picture
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#203627" style={{ opacity: 0.4 }} />
+        </Pressable>
       </ScrollView>
     </LoadingLayout>
   );
